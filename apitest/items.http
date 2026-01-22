@@ -1,5 +1,6 @@
 ### 상품 목록 조회 (전체)
 GET http://localhost:3001/api/items
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NGM0ODMwZi0wNWE4LTQ0MWMtYWYxNi1lZTY0ZDcxMmMyN2MiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjkwNjM3NjIsImV4cCI6MTc2OTA2NDY2Mn0.wALJRP4_FVEKZUnnideSj0FPDSadXtmE5J84noS1yzk
 
 ### 상품 목록 조회 (카테고리 필터)
 GET http://localhost:3001/api/items?category_main=음료&category_sub=청량·탄산음료
@@ -20,11 +21,13 @@ GET http://localhost:3001/api/items?category_main=음료&sort=높은가격순&pa
 GET http://localhost:3001/api/items?page=2&limit=8
 
 ### 상품 상세 조회
-GET http://localhost:3001/api/items/상품ID입력
+GET http://localhost:3001/api/items/9b4c7673-181d-4171-b158-d8070b9d814e
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NGM0ODMwZi0wNWE4LTQ0MWMtYWYxNi1lZTY0ZDcxMmMyN2MiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjkwNjM3NjIsImV4cCI6MTc2OTA2NDY2Mn0.wALJRP4_FVEKZUnnideSj0FPDSadXtmE5J84noS1yzk
 
 ### 상품 등록 (인증 필요)
 POST http://localhost:3001/api/items
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NGM0ODMwZi0wNWE4LTQ0MWMtYWYxNi1lZTY0ZDcxMmMyN2MiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjkwNjM3NjIsImV4cCI6MTc2OTA2NDY2Mn0.wALJRP4_FVEKZUnnideSj0FPDSadXtmE5J84noS1yzk
 
 {
   "title": "코카콜라 제로",

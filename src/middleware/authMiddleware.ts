@@ -18,8 +18,7 @@ export const authMiddleware = (
   next: NextFunction,
 ) => {
   try {
-    // 쿠키에서 토큰 가져오기 (우선순위: 쿠키 > Authorization 헤더)
-    const token = req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (!token) {
       return res.status(401).json({ message: "인증 토큰이 없습니다." });
@@ -35,8 +34,6 @@ export const authMiddleware = (
       id: decoded.userId,
       email: decoded.email,
     };
-    req.userId = decoded.userId;
-    req.userEmail = decoded.email;
     
     next();
   } catch (error) {
@@ -51,7 +48,7 @@ export const optionalAuthMiddleware = (
   next: NextFunction,
 ) => {
   try {
-    const token = req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+    const token = req.headers.authorization?.split(" ")[1];
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET) as {
@@ -62,8 +59,6 @@ export const optionalAuthMiddleware = (
         id: decoded.userId,
         email: decoded.email,
       };
-      req.userId = decoded.userId;
-      req.userEmail = decoded.email;
     }
     
     next();
