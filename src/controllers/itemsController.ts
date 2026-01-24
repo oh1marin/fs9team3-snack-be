@@ -47,14 +47,6 @@ export const getItems = async (req: AuthRequest, res: Response) => {
       orderBy,
       skip,
       take: limitNum,
-      include: {
-        user: {
-          select: {
-            name: true,
-            company_name: true,
-          },
-        },
-      },
     });
 
     // 페이지네이션 정보 계산
@@ -95,9 +87,7 @@ export const getItemById = async (req: AuthRequest, res: Response) => {
         user: {
           select: {
             id: true,
-            name: true,
             email: true,
-            company_name: true,
           },
         },
       },
@@ -120,9 +110,7 @@ export const getItemById = async (req: AuthRequest, res: Response) => {
       updated_at: item.updated_at,
       seller: {
         id: item.user.id,
-        name: item.user.name,
         email: item.user.email,
-        company_name: item.user.company_name,
       },
       // 프론트엔드에서 필요한 추가 정보
       purchaseCount: item.count,
@@ -176,8 +164,7 @@ export const createItem = async (req: AuthRequest, res: Response) => {
         user: {
           select: {
             id: true,
-            name: true,
-            company_name: true,
+            email: true,
           },
         },
       },
@@ -196,8 +183,7 @@ export const createItem = async (req: AuthRequest, res: Response) => {
         created_at: item.create_at,
         seller: {
           id: item.user.id,
-          name: item.user.name,
-          company_name: item.user.company_name,
+          email: item.user.email,
         },
       },
     });
@@ -262,8 +248,7 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
         user: {
           select: {
             id: true,
-            name: true,
-            company_name: true,
+            email: true,
           },
         },
       },
@@ -282,8 +267,7 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
         updated_at: item.updated_at,
         seller: {
           id: item.user.id,
-          name: item.user.name,
-          company_name: item.user.company_name,
+          email: item.user.email,
         },
       },
     });

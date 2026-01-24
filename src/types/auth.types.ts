@@ -4,8 +4,6 @@ export interface User {
   id: string;
   email: string;
   nickname?: string;
-  name?: string;
-  company_name?: string;
   create_at?: Date;
   updated_at?: Date;
 }
@@ -14,8 +12,6 @@ export interface SignupRequest {
   email: string;
   password: string;
   passwordConfirm: string;
-  name?: string;
-  company_name?: string;
 }
 
 export interface LoginRequest {

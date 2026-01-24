@@ -17,7 +17,7 @@ const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-refresh-secre
 // 회원가입
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, name, company_name } = req.body;
+    const { email, password } = req.body;
 
     // 필수 필드 검사
     if (!email || !password) {
@@ -50,8 +50,6 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
       data: {
         email,
         password: hashedPassword,
-        name: name || null,
-        company_name: company_name || "코드잇",
       },
     });
 
@@ -87,7 +85,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
       user: {
         id: user.id,
         email: user.email,
-        nickname: user.name || user.email.split("@")[0],
+        nickname: user.email.split("@")[0],
       },
       accessToken,
       refreshToken,
@@ -155,7 +153,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       user: {
         id: user.id,
         email: user.email,
-        nickname: user.name || user.email.split("@")[0],
+        nickname: user.email.split("@")[0],
       },
       accessToken,
       refreshToken,
@@ -183,8 +181,6 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
       select: {
         id: true,
         email: true,
-        name: true,
-        company_name: true,
         create_at: true,
       },
     });
@@ -196,7 +192,7 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
     res.status(200).json({
       id: user.id,
       email: user.email,
-      nickname: user.name || user.email.split("@")[0],
+      nickname: user.email.split("@")[0],
     });
   } catch (error) {
     next(error);
