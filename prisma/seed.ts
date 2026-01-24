@@ -19,25 +19,19 @@ async function main() {
     prisma.user.create({
       data: {
         email: 'marin@marin.com',
-        name: '마린',
         password: marinPassword,
-        company_name: '코드잇잇',
       },
     }),
     prisma.user.create({
       data: {
         email: 'seller2@codeit.com',
-        name: '이상품',
         password: defaultPassword,
-        company_name: '스낵마켓',
       },
     }),
     prisma.user.create({
       data: {
         email: 'seller3@codeit.com',
-        name: '박음료',
         password: defaultPassword,
-        company_name: '음료천국',
       },
     }),
   ]);

@@ -16,9 +16,7 @@ export interface Item {
 export interface ItemWithSeller extends Omit<Item, "user_id"> {
   seller: {
     id: string;
-    name: string | null;
     email: string;
-    company_name: string;
   };
   purchaseCount: number;
   isOwner?: boolean;

@@ -17,9 +17,7 @@ export const getProfile = async (req: Request, res: Response) => {
       where: { id: userId },
       select: {
         id: true,
-        name: true,
         email: true,
-        company_name: true,
         create_at: true,
       },
     });
