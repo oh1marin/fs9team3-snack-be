@@ -18,7 +18,13 @@ export const authMiddleware = (
   next: NextFunction,
 ) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    // 헤더에서 토큰 확인 (Authorization: Bearer <token>)
+    let token = req.headers.authorization?.split(" ")[1];
+    
+    // 헤더에 없으면 쿠키에서 확인
+    if (!token) {
+      token = req.cookies?.accessToken;
+    }
 
     if (!token) {
       return res.status(401).json({ message: "인증 토큰이 없습니다." });
@@ -48,7 +54,13 @@ export const optionalAuthMiddleware = (
   next: NextFunction,
 ) => {
   try {
-    const token = req.headers.authorization?.split(" ")[1];
+    // 헤더에서 토큰 확인 (Authorization: Bearer <token>)
+    let token = req.headers.authorization?.split(" ")[1];
+    
+    // 헤더에 없으면 쿠키에서 확인
+    if (!token) {
+      token = req.cookies?.accessToken;
+    }
 
     if (token) {
       const decoded = jwt.verify(token, JWT_SECRET) as {
