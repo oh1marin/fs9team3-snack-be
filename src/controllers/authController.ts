@@ -82,6 +82,8 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     });
 
     res.status(201).json({
+      success: true,
+      message: "회원가입이 완료되었습니다! 🎉",
       user: {
         id: user.id,
         email: user.email,
@@ -150,6 +152,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     });
 
     res.status(200).json({
+      success: true,
+      message: "로그인 성공! 👋",
       user: {
         id: user.id,
         email: user.email,
@@ -205,7 +209,10 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
 
-    res.status(200).json({ success: true });
+    res.status(200).json({ 
+      success: true,
+      message: "로그아웃되었습니다."
+    });
   } catch (error) {
     next(error);
   }
@@ -241,7 +248,61 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
       maxAge: 15 * 60 * 1000,
     });
 
-    res.status(200).json({ accessToken: newAccessToken });
+    res.status(200).json({ 
+      success: true,
+      message: "토큰이 갱신되었습니다.",
+      accessToken: newAccessToken 
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// 비밀번호 변경
+export const updatePassword = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    // 쿠키 또는 헤더에서 토큰 가져오기
+    const token = req.cookies?.accessToken || req.headers.authorization?.split(" ")[1];
+
+    if (!token) {
+      throw new UnauthorizedError("인증 토큰이 없습니다.");
+    }
+
+    // JWT 검증
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+
+    const { password } = req.body;
+
+    // 비밀번호 검사
+    if (!password) {
+      throw new BadRequestError("비밀번호를 입력해주세요.");
+    }
+
+    if (password.length < 8) {
+      throw new BadRequestError("비밀번호는 최소 8자 이상이어야 합니다.");
+    }
+
+    // 사용자 확인
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+    });
+
+    if (!user) {
+      throw new NotFoundError("사용자를 찾을 수 없습니다.");
+    }
+
+    // 비밀번호 해싱 및 업데이트
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    await prisma.user.update({
+      where: { id: decoded.userId },
+      data: { password: hashedPassword },
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "비밀번호가 성공적으로 변경되었습니다! 🔒",
+    });
   } catch (error) {
     next(error);
   }

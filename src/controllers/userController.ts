@@ -56,7 +56,10 @@ export const updatePassword = async (req: Request, res: Response) => {
       data: { password: hashedPassword },
     });
 
-    res.json({ message: "비밀번호가 변경되었습니다." });
+    res.json({ 
+      success: true,
+      message: "비밀번호가 성공적으로 변경되었습니다! 🔒" 
+    });
   } catch (error) {
     console.error("비밀번호 변경 오류:", error);
     res.status(500).json({ message: "비밀번호 변경에 실패했습니다." });
