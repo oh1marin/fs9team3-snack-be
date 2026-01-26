@@ -10,12 +10,12 @@ import { authMiddleware, optionalAuthMiddleware } from "../middleware/authMiddle
 
 const router = Router();
 
-// 상품 목록 조회 (공개 - 로그인 선택)
+// 상품 목록 조회 (인증 필요)
 // 쿼리 파라미터: category_main, category_sub, sort, page, limit
 // 예: /api/items?category_main=음료&category_sub=청량·탄산음료&sort=최신순&page=1&limit=8
 router.get("/", authMiddleware, getItems);
 
-// 상품 상세 조회 (공개 - 로그인 선택)
+// 상품 상세 조회 (인증 필요)
 router.get("/:id", authMiddleware, getItemById);
 
 // 상품 등록 (인증 필요)

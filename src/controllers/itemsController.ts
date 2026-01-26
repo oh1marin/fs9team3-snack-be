@@ -38,6 +38,8 @@ export const getItems = async (req: AuthRequest, res: Response) => {
     const limitNum = Math.max(1, Math.min(100, parseInt(limit as string) || 8));
     const skip = (pageNum - 1) * limitNum;
 
+    console.log("🔍 상품 목록 조회:", { where, orderBy, page: pageNum, limit: limitNum });
+
     // 전체 개수 조회
     const totalCount = await prisma.item.count({ where });
 
@@ -48,6 +50,8 @@ export const getItems = async (req: AuthRequest, res: Response) => {
       skip,
       take: limitNum,
     });
+
+    console.log("📊 조회 결과:", { totalCount, returnedCount: items.length, items: items.map(i => ({ id: i.id, title: i.title, category_main: i.category_main, category_sub: i.category_sub })) });
 
     // 페이지네이션 정보 계산
     const totalPages = Math.ceil(totalCount / limitNum);
@@ -130,6 +134,8 @@ export const createItem = async (req: AuthRequest, res: Response) => {
     const { title, price, image, category_main, category_sub } = req.body;
     const userId = req.user?.id;
 
+    console.log("📦 상품 등록 요청:", { title, price, image, category_main, category_sub, userId });
+
     if (!userId) {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
@@ -169,6 +175,8 @@ export const createItem = async (req: AuthRequest, res: Response) => {
         },
       },
     });
+
+    console.log("✅ 상품 등록 성공:", { id: item.id, title: item.title, category_main: item.category_main, category_sub: item.category_sub });
 
     res.status(201).json({
       message: "상품이 등록되었습니다.",
