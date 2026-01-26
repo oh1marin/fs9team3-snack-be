@@ -5,6 +5,7 @@ import {
   getCurrentUser,
   logout,
   refreshToken,
+  updatePassword,
 } from "../controllers/authController";
 
 const router = Router();
@@ -23,5 +24,8 @@ router.post("/logout", logout);
 
 // 토큰 갱신
 router.post("/refresh", refreshToken);
+
+// 비밀번호 변경 (쿠키 기반 인증)
+router.patch("/password", updatePassword);
 
 export default router;

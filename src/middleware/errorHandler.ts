@@ -15,6 +15,7 @@ export const errorHandler = (
   // CustomError: 의도적으로 던진 에러
   if (err instanceof CustomError) {
     return res.status(err.statusCode).json({
+      success: false,
       message: err.message,
     });
   }
@@ -24,12 +25,14 @@ export const errorHandler = (
     res.clearCookie("accessToken");
     res.clearCookie("refreshToken");
     return res.status(401).json({
+      success: false,
       message: "유효하지 않은 토큰입니다. 다시 로그인해주세요.",
     });
   }
 
   // 예상치 못한 에러: 500 응답
   res.status(500).json({
+    success: false,
     message: "서버 오류가 발생했습니다.",
   });
 };
