@@ -28,6 +28,7 @@ model Item {
   count         Int      @default(0)
   user_id       String
   title         String
+  link          String?
   create_at     DateTime @default(now())
   updated_at    DateTime @updatedAt
   
