@@ -23,6 +23,7 @@ router.post("/", authMiddleware, createItem);
 
 // 상품 수정 (인증 필요)
 router.patch("/:id", authMiddleware, updateItem);
+router.put("/:id", authMiddleware, updateItem);
 
 // 상품 삭제 (인증 필요)
 router.delete("/:id", authMiddleware, deleteItem);

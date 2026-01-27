@@ -207,14 +207,17 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
     const { id: itemIdParam } = req.params;
     const itemId = parseItemId(itemIdParam);
 
+    console.log("✏️ 상품 수정 요청:", { itemId, userId: req.user?.id, body: req.body });
+
     if (!itemId) {
       return res.status(400).json({ message: "유효하지 않은 상품 id입니다." });
     }
 
-    const { title, price, image, category_main, category_sub } = req.body;
+    const { title, price, image, category_main, category_sub, link } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
+      console.log("❌ 수정 실패: 로그인 필요");
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
@@ -223,10 +226,14 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
     });
 
     if (!existingItem) {
+      console.log("❌ 수정 실패: 상품을 찾을 수 없음");
       return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
     }
 
+    console.log("📋 기존 상품 정보:", { itemId: existingItem.id, ownerId: existingItem.user_id, requestUserId: userId });
+
     if (existingItem.user_id !== userId) {
+      console.log("❌ 수정 실패: 권한 없음");
       return res.status(403).json({ message: "수정 권한이 없습니다." });
     }
 
@@ -240,6 +247,7 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
     if (image !== undefined) data.image = image;
     if (category_main !== undefined) data.category_main = category_main;
     if (category_sub !== undefined) data.category_sub = category_sub;
+    if (link !== undefined) data.link = link;
 
     if (price !== undefined) {
       const parsedPrice = Number(price);
@@ -262,6 +270,8 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
       },
     });
 
+    console.log("✅ 상품 수정 성공:", { itemId, title: item.title });
+
     res.json({
       message: "상품이 수정되었습니다.",
       item: {
@@ -271,6 +281,7 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
         image: item.image,
         category_main: item.category_main,
         category_sub: item.category_sub,
+        link: item.link,
         count: item.count,
         updated_at: item.updated_at,
         seller: {
@@ -280,7 +291,7 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("상품 수정 오류:", error);
+    console.error("❌ 상품 수정 오류:", error);
     res.status(500).json({ message: "상품 수정에 실패했습니다." });
   }
 };
@@ -291,12 +302,15 @@ export const deleteItem = async (req: AuthRequest, res: Response) => {
     const { id: itemIdParam } = req.params;
     const itemId = parseItemId(itemIdParam);
 
+    console.log("🗑️ 상품 삭제 요청:", { itemId, userId: req.user?.id });
+
     if (!itemId) {
       return res.status(400).json({ message: "유효하지 않은 상품 id입니다." });
     }
 
     const userId = req.user?.id;
     if (!userId) {
+      console.log("❌ 삭제 실패: 로그인 필요");
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
@@ -305,10 +319,14 @@ export const deleteItem = async (req: AuthRequest, res: Response) => {
     });
 
     if (!existingItem) {
+      console.log("❌ 삭제 실패: 상품을 찾을 수 없음");
       return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
     }
 
+    console.log("📋 기존 상품 정보:", { itemId: existingItem.id, ownerId: existingItem.user_id, requestUserId: userId });
+
     if (existingItem.user_id !== userId) {
+      console.log("❌ 삭제 실패: 권한 없음");
       return res.status(403).json({ message: "삭제 권한이 없습니다." });
     }
 
@@ -316,12 +334,14 @@ export const deleteItem = async (req: AuthRequest, res: Response) => {
       where: { id: itemId },
     });
 
+    console.log("✅ 상품 삭제 성공:", { itemId, title: existingItem.title });
+
     res.json({
       success: true,
       message: "상품이 삭제되었습니다.",
     });
   } catch (error) {
-    console.error("상품 삭제 오류:", error);
+    console.error("❌ 상품 삭제 오류:", error);
     res.status(500).json({ message: "상품 삭제에 실패했습니다." });
   }
 };
