@@ -1,5 +1,18 @@
 # 상품 API 문서
 
+---
+
+### Swagger 문서(/api-docs) 변경 요약
+
+| 구분 | 내용 |
+|------|------|
+| **경로** | 모든 API 경로는 그대로 유지 (변경 없음). |
+| **config/swagger.ts** | 상단 설명 보강, FE 사용법(Base URL, `credentials: 'include'`, CORS, 401 처리), 서버 URL·쿠키 인증 설명 추가. |
+| **swagger-docs.ts** | 각 엔드포인트에 설명·예시·파라미터 설명 추가. **비밀번호 변경** API는 실제 백엔드와 맞춰 요청 body를 `password`(새 비밀번호 1개)만 받도록 문서 수정. |
+| **디자인** | Snack 웹사이트와 비슷하게 꾸밈 → `public/swagger-theme.css` (피치 배경, 오렌지 버튼·강조, 둥근 카드). |
+
+---
+
 ## 📋 엔드포인트 목록
 
 ### 1. 상품 목록 조회 (GET /api/items)

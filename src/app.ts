@@ -4,10 +4,12 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import swaggerUi from "swagger-ui-express";
 import authRoutes from "./routes/authRoutes";
 import itemsRoutes from "./routes/items.routes";
 import userRoutes from "./routes/userRoutes";
 import { errorHandler } from "./middleware/errorHandler";
+import swaggerSpec from "./config/swagger";
 
 dotenv.config();
 
@@ -40,6 +42,16 @@ app.get("/", (req, res) => {
   });
 });
 
+// API 문서 (Swagger UI) - /api-docs
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: "Snack API Docs",
+    customCss: ".swagger-ui .topbar { display: none }",
+  })
+);
+
 // 404 핸들러
 app.use((req, res) => {
   res.status(404).json({ message: "존재하지 않는 경로입니다." });
@@ -50,4 +62,5 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`API docs: http://localhost:${PORT}/api-docs`);
 });
