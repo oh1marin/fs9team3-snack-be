@@ -1,5 +1,14 @@
 node_modules
 # Keep environment variables out of version control
 .env
+.env.*
+!.env.example
 
+# Build output (서버에서 yarn build 로 생성)
+dist
+
+# API 테스트용 (로컬 전용)
+apitest
+
+# Prisma generated
 /src/generated/prisma

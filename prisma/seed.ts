@@ -44,7 +44,7 @@ async function main() {
     {
       title: '허니버터칩',
       price: 2500,
-      image: 'https://via.placeholder.com/300x300?text=허니버터칩',
+      image: '',
       category_main: '스낵',
       category_sub: '과자',
       count: 150,
@@ -53,7 +53,7 @@ async function main() {
     {
       title: '새우깡',
       price: 1500,
-      image: 'https://via.placeholder.com/300x300?text=새우깡',
+      image: '',
       category_main: '스낵',
       category_sub: '과자',
       count: 200,
@@ -62,7 +62,7 @@ async function main() {
     {
       title: '포카칩 오리지널',
       price: 2000,
-      image: 'https://via.placeholder.com/300x300?text=포카칩',
+      image: '',
       category_main: '스낵',
       category_sub: '과자',
       count: 80,
@@ -71,7 +71,7 @@ async function main() {
     {
       title: '오감자',
       price: 1800,
-      image: 'https://via.placeholder.com/300x300?text=오감자',
+      image: '',
       category_main: '스낵',
       category_sub: '과자',
       count: 120,
@@ -80,7 +80,7 @@ async function main() {
     {
       title: '초코파이',
       price: 3000,
-      image: 'https://via.placeholder.com/300x300?text=초코파이',
+      image: '',
       category_main: '스낵',
       category_sub: '쿠키·비스킷',
       count: 95,
@@ -91,7 +91,7 @@ async function main() {
     {
       title: '코카콜라',
       price: 1200,
-      image: 'https://via.placeholder.com/300x300?text=코카콜라',
+      image: '',
       category_main: '음료',
       category_sub: '청량·탄산음료',
       count: 300,
@@ -100,7 +100,7 @@ async function main() {
     {
       title: '펩시콜라',
       price: 1200,
-      image: 'https://via.placeholder.com/300x300?text=펩시',
+      image: '',
       category_main: '음료',
       category_sub: '청량·탄산음료',
       count: 250,
@@ -109,7 +109,7 @@ async function main() {
     {
       title: '칠성사이다',
       price: 1000,
-      image: 'https://via.placeholder.com/300x300?text=사이다',
+      image: '',
       category_main: '음료',
       category_sub: '청량·탄산음료',
       count: 180,
@@ -118,7 +118,7 @@ async function main() {
     {
       title: '레드불',
       price: 2500,
-      image: 'https://via.placeholder.com/300x300?text=레드불',
+      image: '',
       category_main: '음료',
       category_sub: '에너지음료',
       count: 100,
@@ -127,7 +127,7 @@ async function main() {
     {
       title: '핫식스',
       price: 1500,
-      image: 'https://via.placeholder.com/300x300?text=핫식스',
+      image: '',
       category_main: '음료',
       category_sub: '에너지음료',
       count: 140,
@@ -136,7 +136,7 @@ async function main() {
     {
       title: '칸타타 아메리카노',
       price: 1800,
-      image: 'https://via.placeholder.com/300x300?text=칸타타',
+      image: '',
       category_main: '음료',
       category_sub: '커피음료',
       count: 220,
@@ -147,7 +147,7 @@ async function main() {
     {
       title: '제주 삼다수 2L',
       price: 1000,
-      image: 'https://via.placeholder.com/300x300?text=삼다수',
+      image: '',
       category_main: '생수',
       category_sub: '생수',
       count: 500,
@@ -156,7 +156,7 @@ async function main() {
     {
       title: '에비앙 500ml',
       price: 1500,
-      image: 'https://via.placeholder.com/300x300?text=에비앙',
+      image: '',
       category_main: '생수',
       category_sub: '생수',
       count: 150,
@@ -167,7 +167,7 @@ async function main() {
     {
       title: '컵라면 신라면',
       price: 1500,
-      image: 'https://via.placeholder.com/300x300?text=신라면',
+      image: '',
       category_main: '간편식',
       category_sub: '라면·면류',
       count: 200,
@@ -176,7 +176,7 @@ async function main() {
     {
       title: '진라면 매운맛',
       price: 1400,
-      image: 'https://via.placeholder.com/300x300?text=진라면',
+      image: '',
       category_main: '간편식',
       category_sub: '라면·면류',
       count: 180,
@@ -185,7 +185,7 @@ async function main() {
     {
       title: '불닭볶음면',
       price: 1600,
-      image: 'https://via.placeholder.com/300x300?text=불닭볶음면',
+      image: '',
       category_main: '간편식',
       category_sub: '라면·면류',
       count: 160,
@@ -194,7 +194,7 @@ async function main() {
     {
       title: 'CJ 햇반',
       price: 1800,
-      image: 'https://via.placeholder.com/300x300?text=햇반',
+      image: '',
       category_main: '간편식',
       category_sub: '즉석밥',
       count: 100,
@@ -205,7 +205,7 @@ async function main() {
     {
       title: '스타벅스 하우스 블렌드',
       price: 15000,
-      image: 'https://via.placeholder.com/300x300?text=스타벅스원두',
+      image: '',
       category_main: '원두커피',
       category_sub: '원두커피',
       count: 30,
@@ -214,7 +214,7 @@ async function main() {
     {
       title: '카누 다크로스트',
       price: 8000,
-      image: 'https://via.placeholder.com/300x300?text=카누',
+      image: '',
       category_main: '원두커피',
       category_sub: '원두커피',
       count: 50,
@@ -225,7 +225,7 @@ async function main() {
     {
       title: '종이컵 1000개입',
       price: 12000,
-      image: 'https://via.placeholder.com/300x300?text=종이컵',
+      image: '',
       category_main: '비품',
       category_sub: '일회용품',
       count: 40,
@@ -234,7 +234,7 @@ async function main() {
     {
       title: '키친타월 6롤',
       price: 8000,
-      image: 'https://via.placeholder.com/300x300?text=키친타월',
+      image: '',
       category_main: '비품',
       category_sub: '주방용품',
       count: 60,

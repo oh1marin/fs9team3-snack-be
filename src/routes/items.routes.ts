@@ -6,7 +6,8 @@ import {
   updateItem,
   deleteItem,
 } from "../controllers/itemsController";
-import { authMiddleware, optionalAuthMiddleware } from "../middleware/authMiddleware";
+import { authMiddleware } from "../middleware/authMiddleware";
+import { uploadToS3 } from "../config/upload";
 
 const router = Router();
 
@@ -19,11 +20,13 @@ router.get("/", authMiddleware, getItems);
 router.get("/:id", authMiddleware, getItemById);
 
 // 상품 등록 (인증 필요)
-router.post("/", authMiddleware, createItem);
+// multipart/form-data: title, price, category_main, category_sub, image(파일)
+// application/json: title, price, image(URL), category_main, category_sub
+router.post("/", authMiddleware, uploadToS3.single("image"), createItem);
 
 // 상품 수정 (인증 필요)
-router.patch("/:id", authMiddleware, updateItem);
-router.put("/:id", authMiddleware, updateItem);
+router.patch("/:id", authMiddleware, uploadToS3.single("image"), updateItem);
+router.put("/:id", authMiddleware, uploadToS3.single("image"), updateItem);
 
 // 상품 삭제 (인증 필요)
 router.delete("/:id", authMiddleware, deleteItem);
