@@ -128,17 +128,13 @@ export const getItemById = async (req: AuthRequest, res: Response) => {
   }
 };
 
-// S3 업로드 시 location, multipart 시 req.body에 필드
-type FileWithLocation = Express.Multer.File & { location?: string };
-
 // 상품 등록
 export const createItem = async (req: AuthRequest, res: Response) => {
   try {
     const { title, price, image, category_main, category_sub } = req.body;
     const userId = req.user?.id;
-    const imageUrl = (req.file as FileWithLocation)?.location || image || "";
 
-    console.log("📦 상품 등록 요청:", { title, price, imageUrl, category_main, category_sub, userId });
+    console.log("📦 상품 등록 요청:", { title, price, image, category_main, category_sub, userId });
 
     if (!userId) {
       return res.status(401).json({ message: "로그인이 필요합니다." });
@@ -165,7 +161,7 @@ export const createItem = async (req: AuthRequest, res: Response) => {
       data: {
         title: title.trim(),
         price: Math.trunc(parsedPrice),
-        image: imageUrl,
+        image: image || "",
         category_main,
         category_sub,
         user_id: userId,
@@ -248,8 +244,7 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
       }
       data.title = title.trim();
     }
-    const imageUrl = (req.file as FileWithLocation)?.location ?? image;
-    if (imageUrl !== undefined) data.image = imageUrl;
+    if (image !== undefined) data.image = image;
     if (category_main !== undefined) data.category_main = category_main;
     if (category_sub !== undefined) data.category_sub = category_sub;
     if (link !== undefined) data.link = link;

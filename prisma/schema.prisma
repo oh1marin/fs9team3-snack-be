@@ -36,12 +36,3 @@ model Item {
 
   @@map("items")
 }
-
-model DiaryEntry {
-  id        Int      @id @default(autoincrement())
-  date      DateTime @default(now())
-  photoUrl  String?  @default("")
-  content   String?  @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
