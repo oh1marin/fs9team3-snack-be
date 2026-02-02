@@ -1,5 +1,10 @@
+# 서버 IP는 여기만 바꾸면 됨 (로컬: http://localhost:3001 / 서버: http://3.37.235.204)
+@baseUrl = http://3.37.235.204
+
+GET {{baseUrl}}/
+
 ### 회원가입
-POST http://localhost:3001/api/auth/signup
+POST {{baseUrl}}/api/auth/signup
 Content-Type: application/json
 
 {
@@ -11,7 +16,7 @@ Content-Type: application/json
 }
 
 ### 로그인
-POST http://localhost:3001/api/auth/login
+POST {{baseUrl}}/api/auth/login
 Content-Type: application/json
 
 {
@@ -20,13 +25,13 @@ Content-Type: application/json
 }
 
 ### 현재 유저 정보 조회 (쿠키 자동 전송)
-GET http://localhost:3001/api/auth/me
+GET {{baseUrl}}/api/auth/me
 
 ### 로그아웃
-POST http://localhost:3001/api/auth/logout
+POST {{baseUrl}}/api/auth/logout
 
 ### 토큰 갱신
-POST http://localhost:3001/api/auth/refresh
+POST {{baseUrl}}/api/auth/refresh
 Content-Type: application/json
 
 {

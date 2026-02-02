@@ -154,7 +154,7 @@
  *         description: 페이지당 개수
  *     responses:
  *       200:
- *         description: { data, pagination } 형식으로 상품 배열 및 페이지 정보
+ *         description: "data, pagination 필드로 상품 배열 및 페이지 정보"
  *       401:
  *         description: 인증되지 않음
  *   post:
