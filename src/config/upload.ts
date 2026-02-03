@@ -28,6 +28,7 @@ const s3Storage = process.env.AWS_PUBLIC_BUCKET_NAME
   ? multerS3({
       s3: s3Client as never,
       bucket: process.env.AWS_PUBLIC_BUCKET_NAME,
+      acl: 'public-read', 
       contentType: multerS3.AUTO_CONTENT_TYPE,
       key: (
         _req: Request,
