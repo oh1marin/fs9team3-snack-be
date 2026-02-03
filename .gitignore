@@ -1,5 +1,7 @@
 node_modules
 # Keep environment variables out of version control
 .env
+.env.ec2
+.env.example
 
 /src/generated/prisma
