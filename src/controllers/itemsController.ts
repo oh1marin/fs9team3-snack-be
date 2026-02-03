@@ -184,7 +184,7 @@ export const createItem = async (req: AuthRequest, res: Response) => {
       data: {
         title: title.trim(),
         price: Math.trunc(parsedPrice),
-        image: image || "",
+        image: imageUrl || "",
         category_main,
         category_sub,
         user_id: userId,
