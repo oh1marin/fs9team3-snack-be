@@ -8,8 +8,7 @@ import {
   getPresignedUploadUrl,
   getPresignedImageUrl,
 } from "../controllers/itemsController";
-import { authMiddleware } from "../middleware/authMiddleware";
-import { uploadToS3 } from "../config/upload";
+import { authMiddleware, optionalAuthMiddleware } from "../middleware/authMiddleware";
 
 const router = Router();
 
@@ -24,13 +23,11 @@ router.get("/presigned-image", authMiddleware, getPresignedImageUrl);
 router.get("/:id", getItemById);
 
 // 상품 등록 (인증 필요)
-// multipart/form-data: title, price, category_main, category_sub, image(파일)
-// application/json: title, price, image(URL), category_main, category_sub
-router.post("/", authMiddleware, uploadToS3.single("image"), createItem);
+router.post("/", authMiddleware, createItem);
 
 // 상품 수정 (인증 필요)
-router.patch("/:id", authMiddleware, uploadToS3.single("image"), updateItem);
-router.put("/:id", authMiddleware, uploadToS3.single("image"), updateItem);
+router.patch("/:id", authMiddleware, updateItem);
+router.put("/:id", authMiddleware, updateItem);
 
 // 상품 삭제 (인증 필요)
 router.delete("/:id", authMiddleware, deleteItem);
