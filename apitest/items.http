@@ -27,7 +27,7 @@ GET {{baseUrl}}/api/items?page=2&limit=8
 GET {{baseUrl}}/api/items/9b4c7673-181d-4171-b158-d8070b9d814e
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NGM0ODMwZi0wNWE4LTQ0MWMtYWYxNi1lZTY0ZDcxMmMyN2MiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjkwNjM3NjIsImV4cCI6MTc2OTA2NDY2Mn0.wALJRP4_FVEKZUnnideSj0FPDSadXtmE5J84noS1yzk
 
-### 상품 등록 (인증 필요)
+### 상품 등록 (JSON - 이미지 URL)
 POST {{baseUrl}}/api/items
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NGM0ODMwZi0wNWE4LTQ0MWMtYWYxNi1lZTY0ZDcxMmMyN2MiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjkwNjM3NjIsImV4cCI6MTc2OTA2NDY2Mn0.wALJRP4_FVEKZUnnideSj0FPDSadXtmE5J84noS1yzk
@@ -39,6 +39,35 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NGM0O
   "category_main": "음료",
   "category_sub": "청량·탄산음료"
 }
+
+### 상품 등록 (multipart - 이미지 파일 업로드, apitest/test-image.png 사용)
+# 토큰은 위 Bearer 값으로 교체. 이미지는 apitest/test-image.png 또는 본인 이미지 경로로 변경
+POST {{baseUrl}}/api/items
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI3NGM0ODMwZi0wNWE4LTQ0MWMtYWYxNi1lZTY0ZDcxMmMyN2MiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3NjkwNjM3NjIsImV4cCI6MTc2OTA2NDY2Mn0.wALJRP4_FVEKZUnnideSj0FPDSadXtmE5J84noS1yzk
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="title"
+
+과자 테스트
+------WebKitFormBoundary
+Content-Disposition: form-data; name="price"
+
+1500
+------WebKitFormBoundary
+Content-Disposition: form-data; name="category_main"
+
+과자
+------WebKitFormBoundary
+Content-Disposition: form-data; name="category_sub"
+
+스낵
+------WebKitFormBoundary
+Content-Disposition: form-data; name="image"; filename="test-image.png"
+Content-Type: image/png
+
+< ./test-image.png
+------WebKitFormBoundary--
 
 ### 상품 수정 (인증 필요)
 PATCH {{baseUrl}}/api/items/상품ID입력

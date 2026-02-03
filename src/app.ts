@@ -1,8 +1,9 @@
 // src/app.ts
+// 이미지 업로드(upload.ts) 등에서 env를 쓰므로 .env를 가장 먼저 로드
+import "dotenv/config";
 
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import authRoutes from "./routes/authRoutes";
@@ -11,15 +12,34 @@ import userRoutes from "./routes/userRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import swaggerSpec from "./config/swagger";
 
-dotenv.config();
-
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// 미들웨어
+// CORS: 로컬 + 배포 프론트. CORS_ORIGIN에 호스트만 있어도 같은 호스트 다른 포트 허용
+const corsOriginList = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
+  : ["http://localhost:3000", "http://localhost:4000"];
+const corsOriginHosts = corsOriginList.map((u) => {
+  try {
+    return new URL(u).hostname;
+  } catch {
+    return "";
+  }
+}).filter(Boolean);
+
+function corsOrigin(origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) {
+  if (!origin) return cb(null, true);
+  if (corsOriginList.includes(origin)) return cb(null, true);
+  try {
+    const host = new URL(origin).hostname;
+    if (corsOriginHosts.includes(host)) return cb(null, true);
+  } catch {}
+  cb(null, false);
+}
+
 app.use(
   cors({
-    origin: ["http://localhost:3000", "http://localhost:4000"],
+    origin: corsOrigin,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],

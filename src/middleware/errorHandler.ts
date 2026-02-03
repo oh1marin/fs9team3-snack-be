@@ -30,9 +30,12 @@ export const errorHandler = (
     });
   }
 
-  // 예상치 못한 에러: 500 응답
+  // 예상치 못한 에러: 500 응답 (원인은 서버 로그에 출력됨)
+  console.error("[500]", err.message, err.stack);
+  const isDev = process.env.NODE_ENV !== "production";
   res.status(500).json({
     success: false,
     message: "서버 오류가 발생했습니다.",
+    ...(isDev && err?.message ? { error: err.message } : {}),
   });
 };

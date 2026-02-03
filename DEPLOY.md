@@ -281,3 +281,40 @@ sudo systemctl reload nginx
 
 로컬: `http://localhost`  
 EC2: `http://EC2퍼블릭IP`
+
+---
+
+## 9. 로그인/API 500 "서버 오류" 시 확인 (AWS + EC2)
+
+프론트에서 "서버 오류가 발생했습니다" 나오면 백엔드가 500을 반환한 상태입니다. 아래 순서로 확인하세요.
+
+### 9-1. EC2에서 실제 에러 확인
+
+```bash
+pm2 logs snack-be --lines 50
+```
+
+`[500]` 또는 `Error:` 다음에 나오는 메시지가 원인입니다. 예:
+
+- `Environment variable not found: DATABASE_URL` → EC2에 `.env` 없거나 `DATABASE_URL` 없음. `.env` 만들고 `pm2 restart snack-be --update-env`
+- `Can't reach database server` / `connection refused` → RDS 보안 그룹(아래 9-2) 확인
+- `invalid signature` / JWT 관련 → `JWT_SECRET`, `JWT_REFRESH_SECRET` 값 확인 (로컬과 동일해야 함)
+
+### 9-2. AWS에서 자주 빠지는 것
+
+| 확인 항목 | 설명 |
+|-----------|------|
+| **RDS 보안 그룹** | RDS → 해당 DB → 연결/보안 → VPC 보안 그룹 → **인바운드 규칙**에 **PostgreSQL(5432)** 가 있고, **소스**가 EC2의 보안 그룹이어야 함. (EC2에서 RDS로 접속 허용) |
+| **EC2 보안 그룹** | EC2 → 인스턴스 → 보안 그룹 → **인바운드**에 **HTTP(80)** 또는 **사용자 지정 TCP 3001** 이 있고, **소스 0.0.0.0/0** (또는 테스트용으로 전체 허용). NGINX 쓰면 80 필수. |
+| **EC2 `.env`** | `~/fs9team3-snack-be/.env` 에 `DATABASE_URL`, `JWT_SECRET`, `JWT_REFRESH_SECRET`, `CORS_ORIGIN` 등 있음. `.env.ec2` 내용 복사해서 사용. |
+| **RDS와 EC2 같은 VPC** | RDS 생성 시 "EC2 컴퓨팅 리소스에 연결"로 같은 VPC/서브넷이어야 EC2에서 RDS 접속 가능. |
+| **프론트 API 주소** | 프론트엔드의 API Base URL이 `http://EC2퍼블릭IP` (또는 NGINX 쓰면 `http://EC2퍼블릭IP`) 로 되어 있는지. localhost면 배포 환경에서 백엔드로 안 감. |
+
+### 9-3. RDS 보안 그룹 인바운드 예시
+
+- **유형:** PostgreSQL  
+- **포트:** 5432  
+- **소스:** EC2 인스턴스에 붙어 있는 보안 그룹 ID (예: `sg-xxxxx`)  
+  → "사용자 지정"에서 EC2 보안 그룹 선택하면 됨.
+
+이렇게 해야 EC2에서 RDS 5432로 접속이 허용됩니다.

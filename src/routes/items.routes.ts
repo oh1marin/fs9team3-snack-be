@@ -5,19 +5,23 @@ import {
   createItem,
   updateItem,
   deleteItem,
+  getPresignedUploadUrl,
+  getPresignedImageUrl,
 } from "../controllers/itemsController";
 import { authMiddleware } from "../middleware/authMiddleware";
 import { uploadToS3 } from "../config/upload";
 
 const router = Router();
 
-// 상품 목록 조회 (인증 필요)
-// 쿼리 파라미터: category_main, category_sub, sort, page, limit
-// 예: /api/items?category_main=음료&category_sub=청량·탄산음료&sort=최신순&page=1&limit=8
-router.get("/", authMiddleware, getItems);
+// 상품 목록 조회 (인증 없이 허용 - cross-origin 쿠키 미전송 대응)
+router.get("/", getItems);
 
-// 상품 상세 조회 (인증 필요)
-router.get("/:id", authMiddleware, getItemById);
+// Presigned 업로드 URL 발급 (인증 필요)
+router.get("/presigned-upload-url", authMiddleware, getPresignedUploadUrl);
+router.get("/presigned-image", authMiddleware, getPresignedImageUrl);
+
+// 상품 상세 조회 (인증 없이 허용)
+router.get("/:id", getItemById);
 
 // 상품 등록 (인증 필요)
 // multipart/form-data: title, price, category_main, category_sub, image(파일)
