@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { createPresignedUpload, getPresignedDownloadUrl, getPublicObjectUrl } from "../config/upload";
 
 const prisma = new PrismaClient();
 
@@ -128,11 +129,33 @@ export const getItemById = async (req: AuthRequest, res: Response) => {
   }
 };
 
+// S3 업로드 시 location (SDK v3는 미반환 → bucket+key로 URL 생성)
+type FileWithLocation = Express.Multer.File & { location?: string; bucket?: string; key?: string };
+
+function getImageUrl(file: FileWithLocation | undefined, bodyImage: string | undefined): string {
+  if (!file || typeof file !== "object") return bodyImage ?? "";
+  if (typeof file.location === "string" && file.location) return file.location;
+  if (typeof file.bucket === "string" && typeof file.key === "string") return getPublicObjectUrl(file.bucket, file.key);
+  return bodyImage ?? "";
+}
+
+// FormData는 모든 값을 문자열로 보냄. 배열이 올 수 있으므로 단일값으로 정규화
+function first(value: unknown): string | undefined {
+  if (value == null) return undefined;
+  if (Array.isArray(value)) return value.length ? String(value[0]) : undefined;
+  return String(value);
+}
+
 // 상품 등록
 export const createItem = async (req: AuthRequest, res: Response) => {
   try {
-    const { title, price, image, category_main, category_sub } = req.body;
+    const title = first(req.body?.title);
+    const price = first(req.body?.price);
+    const image = first(req.body?.image);
+    const category_main = first(req.body?.category_main);
+    const category_sub = first(req.body?.category_sub);
     const userId = req.user?.id;
+    const imageUrl = getImageUrl(req.file as FileWithLocation, image);
 
     console.log("📦 상품 등록 요청:", { title, price, image, category_main, category_sub, userId });
 
@@ -196,8 +219,13 @@ export const createItem = async (req: AuthRequest, res: Response) => {
       },
     });
   } catch (error) {
-    console.error("상품 등록 오류:", error);
-    res.status(500).json({ message: "상품 등록에 실패했습니다." });
+    const err = error as Error;
+    const errMessage = err?.message ?? String(error);
+    console.error("상품 등록 오류:", errMessage, err?.stack);
+    res.status(500).json({
+      message: "상품 등록에 실패했습니다.",
+      error: errMessage,
+    });
   }
 };
 
@@ -244,7 +272,8 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
       }
       data.title = title.trim();
     }
-    if (image !== undefined) data.image = image;
+    const imageUrl = getImageUrl(req.file as FileWithLocation, image);
+    if (imageUrl !== undefined && imageUrl !== "") data.image = imageUrl;
     if (category_main !== undefined) data.category_main = category_main;
     if (category_sub !== undefined) data.category_sub = category_sub;
     if (link !== undefined) data.link = link;
@@ -293,6 +322,40 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("❌ 상품 수정 오류:", error);
     res.status(500).json({ message: "상품 수정에 실패했습니다." });
+  }
+};
+
+// Presigned 업로드 URL 발급 (클라이언트가 이 URL로 PUT → imageUrl을 상품 등록/수정 시 image로 전달)
+export const getPresignedUploadUrl = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "로그인이 필요합니다." });
+    }
+    const filename = typeof req.query.filename === "string" ? req.query.filename : undefined;
+    const result = await createPresignedUpload(filename);
+    res.json(result);
+  } catch (error) {
+    console.error("Presigned URL 발급 오류:", error);
+    res.status(500).json({ message: "Presigned URL 발급에 실패했습니다." });
+  }
+};
+
+// Presigned 다운로드 URL (프라이빗 버킷 객체 조회용)
+export const getPresignedImageUrl = async (req: AuthRequest, res: Response) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ message: "로그인이 필요합니다." });
+    }
+    const key = typeof req.query.key === "string" ? req.query.key : "";
+    const bucket = process.env.AWS_PRIVATE_BUCKET_NAME;
+    if (!bucket || !key) {
+      return res.status(400).json({ message: "key 쿼리와 AWS_PRIVATE_BUCKET_NAME이 필요합니다." });
+    }
+    const url = await getPresignedDownloadUrl(bucket, key);
+    res.json({ url });
+  } catch (error) {
+    console.error("Presigned 다운로드 URL 오류:", error);
+    res.status(500).json({ message: "Presigned URL 발급에 실패했습니다." });
   }
 };
 

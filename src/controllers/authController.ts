@@ -69,14 +69,14 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     // 쿠키 설정
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.USE_HTTPS === "true",
       sameSite: "lax",
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.USE_HTTPS === "true",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -139,14 +139,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     // 쿠키 설정
     res.cookie("accessToken", accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.USE_HTTPS === "true",
       sameSite: "lax",
       maxAge: 15 * 60 * 1000,
     });
 
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.USE_HTTPS === "true",
       sameSite: "lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
@@ -243,7 +243,7 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
     // 쿠키 업데이트
     res.cookie("accessToken", newAccessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.USE_HTTPS === "true",
       sameSite: "lax",
       maxAge: 15 * 60 * 1000,
     });
