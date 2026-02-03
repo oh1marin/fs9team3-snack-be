@@ -19,8 +19,8 @@ router.get("/", getItems);
 router.get("/presigned-upload-url", authMiddleware, getPresignedUploadUrl);
 router.get("/presigned-image", authMiddleware, getPresignedImageUrl);
 
-// 상품 상세 조회 (인증 없이 허용)
-router.get("/:id", getItemById);
+// 상품 상세 조회 (인증 없이 허용, 로그인 시 isOwner용 optionalAuth)
+router.get("/:id", optionalAuthMiddleware, getItemById);
 
 // 상품 등록 (인증 필요)
 router.post("/", authMiddleware, createItem);
