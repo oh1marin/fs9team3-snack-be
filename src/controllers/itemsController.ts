@@ -157,7 +157,7 @@ export const createItem = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const imageUrl = getImageUrl(req.file as FileWithLocation, image);
 
-    console.log("📦 상품 등록 요청:", { title, price, imageUrl, category_main, category_sub, userId });
+    console.log("📦 상품 등록 요청:", { title, price, image, category_main, category_sub, userId });
 
     if (!userId) {
       return res.status(401).json({ message: "로그인이 필요합니다." });
@@ -184,7 +184,7 @@ export const createItem = async (req: AuthRequest, res: Response) => {
       data: {
         title: title.trim(),
         price: Math.trunc(parsedPrice),
-        image: imageUrl,
+        image: image || "",
         category_main,
         category_sub,
         user_id: userId,

@@ -1,5 +1,5 @@
-# 서버 IP: apitest/auth.http 맨 위 @baseUrl 과 맞추기 (http://3.37.235.204 또는 http://localhost:3001)
-@baseUrl = http://3.37.235.204
+# 서버 주소: 로컬(직접)=http://localhost:3001, Nginx(80포트)=http://localhost, EC2=http://3.37.235.204
+@baseUrl = http://localhost
 
 ### 상품 목록 조회 (전체)
 GET {{baseUrl}}/api/items

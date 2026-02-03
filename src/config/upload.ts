@@ -1,3 +1,4 @@
+import type { Request } from "express";
 import multer from "multer";
 import multerS3 from "multer-s3";
 import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
@@ -28,7 +29,11 @@ const s3Storage = process.env.AWS_PUBLIC_BUCKET_NAME
       s3: s3Client as never,
       bucket: process.env.AWS_PUBLIC_BUCKET_NAME,
       contentType: multerS3.AUTO_CONTENT_TYPE,
-      key: (_req, file, cb) => {
+      key: (
+        _req: Request,
+        file: Express.Multer.File,
+        cb: (error: Error | null, key: string) => void
+      ) => {
         cb(null, `${Date.now()}_${file.originalname}`);
       },
     })
