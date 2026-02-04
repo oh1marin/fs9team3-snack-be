@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 3001;
 // CORS: 로컬 + 배포 프론트. CORS_ORIGIN에 호스트만 있어도 같은 호스트 다른 포트 허용
 const corsOriginList = process.env.CORS_ORIGIN
   ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim())
-  : ["http://localhost:3000", "http://localhost:4000"];
+  : ["http://localhost:3000", "http://localhost:4000","https://fs9team3-snack-fe.vercel.app/"];
 const corsOriginHosts = corsOriginList.map((u) => {
   try {
     return new URL(u).hostname;
