@@ -14,6 +14,17 @@ import {
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
 const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
 
+/** 배포(HTTPS) 시 Vercel 등 크로스오리진에서 쿠키 전송 가능하도록 옵션 */
+function cookieOptions(maxAgeMs: number) {
+  const isSecure = process.env.NODE_ENV === "production" || process.env.USE_HTTPS === "true";
+  return {
+    httpOnly: true,
+    secure: isSecure,
+    sameSite: (isSecure ? "none" : "lax") as "none" | "lax",
+    maxAge: maxAgeMs,
+  };
+}
+
 // 회원가입
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -66,20 +77,9 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
       { expiresIn: "7d" }
     );
 
-    // 쿠키 설정
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.USE_HTTPS === "true",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.USE_HTTPS === "true",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // 쿠키 설정 (배포 시 sameSite=none 으로 Vercel 등 크로스오리진 허용)
+    res.cookie("accessToken", accessToken, cookieOptions(15 * 60 * 1000));
+    res.cookie("refreshToken", refreshToken, cookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.status(201).json({
       success: true,
@@ -136,20 +136,9 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       { expiresIn: "7d" }
     );
 
-    // 쿠키 설정
-    res.cookie("accessToken", accessToken, {
-      httpOnly: true,
-      secure: process.env.USE_HTTPS === "true",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
-
-    res.cookie("refreshToken", refreshToken, {
-      httpOnly: true,
-      secure: process.env.USE_HTTPS === "true",
-      sameSite: "lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
+    // 쿠키 설정 (배포 시 sameSite=none 으로 Vercel 등 크로스오리진 허용)
+    res.cookie("accessToken", accessToken, cookieOptions(15 * 60 * 1000));
+    res.cookie("refreshToken", refreshToken, cookieOptions(7 * 24 * 60 * 60 * 1000));
 
     res.status(200).json({
       success: true,
@@ -240,13 +229,8 @@ export const refreshToken = async (req: Request, res: Response, next: NextFuncti
       { expiresIn: "15m" }
     );
 
-    // 쿠키 업데이트
-    res.cookie("accessToken", newAccessToken, {
-      httpOnly: true,
-      secure: process.env.USE_HTTPS === "true",
-      sameSite: "lax",
-      maxAge: 15 * 60 * 1000,
-    });
+    // 쿠키 업데이트 (배포 시 sameSite=none)
+    res.cookie("accessToken", newAccessToken, cookieOptions(15 * 60 * 1000));
 
     res.status(200).json({ 
       success: true,
