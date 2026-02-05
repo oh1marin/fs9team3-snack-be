@@ -1,4 +1,4 @@
-# 서버 주소: 로컬(직접)=http://localhost:3001, Nginx(80포트)=http://localhost, EC2=http://3.37.235.204
+# 서버 주소: 로컬(직접)=http://localhost:3001, Nginx(80포트)=http://localhost, EC2=http://13.209.21.15
 @baseUrl = http://localhost
 
 ### 상품 목록 조회 (전체)

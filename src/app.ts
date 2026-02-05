@@ -22,8 +22,8 @@ const corsOriginList = process.env.CORS_ORIGIN
       "http://localhost:3000",
       "http://localhost:4000",
       "https://fs9team3-snack-fe.vercel.app",
-      "https://snack-marin.store",
-      "https://www.snack-marin.store",
+      "https://marin-snack.store",
+      "https://www.marin-snack.store",
     ];
 const corsOriginHosts = corsOriginList.map((u) => {
   try {

@@ -1,5 +1,5 @@
 ### 회원가입
-POST http://3.37.235.204/api/auth/signup
+POST http://13.209.21.15/api/auth/signup
 Content-Type: application/json
 
 {
