@@ -9,6 +9,7 @@ import swaggerUi from "swagger-ui-express";
 import authRoutes from "./routes/authRoutes";
 import itemsRoutes from "./routes/items.routes";
 import userRoutes from "./routes/userRoutes";
+import cartRoutes from "./routes/cartRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import swaggerSpec from "./config/swagger";
 
@@ -60,6 +61,7 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemsRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/carts", cartRoutes);
 
 // Health check
 app.get("/", (req, res) => {
