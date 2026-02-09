@@ -81,7 +81,8 @@ export const updateCart = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
-    const cartId = req.params.cartId?.trim();
+    const cartIdParam = req.params.cartId;
+    const cartId = (typeof cartIdParam === "string" ? cartIdParam : cartIdParam?.[0] ?? "").trim();
     if (!cartId) {
       return res.status(400).json({ message: "cartId가 필요합니다." });
     }
@@ -125,7 +126,8 @@ export const deleteCart = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
-    const cartId = req.params.cartId?.trim();
+    const cartIdParam = req.params.cartId;
+    const cartId = (typeof cartIdParam === "string" ? cartIdParam : cartIdParam?.[0] ?? "").trim();
     if (!cartId) {
       return res.status(400).json({ message: "cartId가 필요합니다." });
     }
