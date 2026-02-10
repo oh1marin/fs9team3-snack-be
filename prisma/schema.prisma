@@ -16,6 +16,7 @@ model User {
 
   items        Item[]
   carts        Cart[]
+  orders       Order[]
 
   @@map("users")
 }
@@ -32,9 +33,10 @@ model Item {
   link          String?
   create_at     DateTime @default(now())
   updated_at    DateTime @updatedAt
-  
-  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
   carts         Cart[]
+  order_items   OrderItem[]
 
   @@map("items")
 }
@@ -54,4 +56,35 @@ model Cart {
 
   @@unique([user_id, item_id])
   @@map("carts")
+}
+
+// 구매 요청(주문)
+model Order {
+  id           String   @id @default(uuid())
+  user_id      String
+  status       String   @default("pending") // pending, approved, cancelled
+  request_date DateTime @default(now())
+  total_amount Int      @default(0)
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  user         User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  order_items  OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  order_id    String
+  item_id     String
+  quantity    Int      @default(1)
+  total_price Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  item  Item  @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
 }

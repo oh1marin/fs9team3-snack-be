@@ -10,6 +10,7 @@ import authRoutes from "./routes/authRoutes";
 import itemsRoutes from "./routes/items.routes";
 import userRoutes from "./routes/userRoutes";
 import cartRoutes from "./routes/cartRoutes";
+import orderRoutes from "./routes/orderRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import swaggerSpec from "./config/swagger";
 
@@ -61,7 +62,8 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemsRoutes);
 app.use("/api/users", userRoutes);
-app.use("/api/carts", cartRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 
 // Health check
 app.get("/", (req, res) => {
