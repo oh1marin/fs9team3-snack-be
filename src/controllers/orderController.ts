@@ -69,7 +69,8 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
-    const id = req.params.id?.trim();
+    const idParam = req.params.id;
+    const id = (Array.isArray(idParam) ? idParam[0] : idParam)?.trim();
     if (!id) {
       return res.status(400).json({ message: "주문 ID가 필요합니다." });
     }
@@ -169,7 +170,8 @@ export const cancelOrder = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
-    const id = req.params.id?.trim();
+    const idParam = req.params.id;
+    const id = (Array.isArray(idParam) ? idParam[0] : idParam)?.trim();
     if (!id) {
       return res.status(400).json({ message: "주문 ID가 필요합니다." });
     }
