@@ -4,7 +4,7 @@ import { AuthRequest } from "../middleware/authMiddleware";
 
 const prisma = new PrismaClient();
 
-/** GET /api/carts - 현재 사용자 장바구니 목록 */
+/* GET /api/carts - 현재 사용자 장바구니 목록 */
 export const getCarts = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -25,7 +25,7 @@ export const getCarts = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** POST /api/carts - 장바구니에 담기 (item_id, quantity) */
+/*POST /api/carts - 장바구니에 담기 */
 export const createCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -73,7 +73,7 @@ export const createCart = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** PATCH /api/carts/:cartId - 수량/금액 수정 */
+/* PATCH /api/cart/items/:id - 수량/금액 수정 */
 export const updateCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -81,10 +81,10 @@ export const updateCart = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
-    const cartIdParam = req.params.cartId;
-    const cartId = (typeof cartIdParam === "string" ? cartIdParam : cartIdParam?.[0] ?? "").trim();
+    const idParam = req.params.id;
+    const cartId = (typeof idParam === "string" ? idParam : idParam?.[0] ?? "").trim();
     if (!cartId) {
-      return res.status(400).json({ message: "cartId가 필요합니다." });
+      return res.status(400).json({ message: "항목 ID가 필요합니다." });
     }
 
     const existing = await prisma.cart.findUnique({
@@ -118,7 +118,7 @@ export const updateCart = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** DELETE /api/carts/:cartId - 1개 삭제 (추후 삭제할 cart id 목록 전송 방식으로 개선 예정) */
+/* DELETE /api/cart/items/:id - 1개 삭제 */
 export const deleteCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -126,10 +126,10 @@ export const deleteCart = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
-    const cartIdParam = req.params.cartId;
-    const cartId = (typeof cartIdParam === "string" ? cartIdParam : cartIdParam?.[0] ?? "").trim();
+    const idParam = req.params.id;
+    const cartId = (typeof idParam === "string" ? idParam : idParam?.[0] ?? "").trim();
     if (!cartId) {
-      return res.status(400).json({ message: "cartId가 필요합니다." });
+      return res.status(400).json({ message: "항목 ID가 필요합니다." });
     }
 
     const existing = await prisma.cart.findUnique({
@@ -151,5 +151,25 @@ export const deleteCart = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("장바구니 삭제 오류:", error);
     res.status(500).json({ message: "장바구니 삭제에 실패했습니다." });
+  }
+};
+
+/* DELETE /api/cart - 장바구니 비우기 */
+export const clearCart = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다." });
+    }
+
+    await prisma.cart.deleteMany({ where: { user_id: userId } });
+
+    res.json({
+      success: true,
+      message: "장바구니를 비웠습니다.",
+    });
+  } catch (error) {
+    console.error("장바구니 비우기 오류:", error);
+    res.status(500).json({ message: "장바구니 비우기에 실패했습니다." });
   }
 };
