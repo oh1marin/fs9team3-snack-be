@@ -12,7 +12,7 @@ const router = Router();
 
 // FE: GET /api/cart, POST /api/cart/items, PATCH/DELETE /api/cart/items/:id, DELETE /api/cart
 router.get("/", authMiddleware, getCarts);
-router.post("/items", authMiddleware, createCart);
+router.post("/items", authMiddleware, createCart);//https://localhost:3000/api/cart/items
 router.patch("/items/:id", authMiddleware, updateCart);
 router.delete("/items/:id", authMiddleware, deleteCart);
 router.delete("/", authMiddleware, clearCart);

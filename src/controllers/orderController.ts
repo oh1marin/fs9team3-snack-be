@@ -4,6 +4,20 @@ import { AuthRequest } from "../middleware/authMiddleware";
 
 const prisma = new PrismaClient();
 
+/** FE 대표 이미지: 주문 최상위 first_item_image / image / image_url */
+function withOrderListImage(
+  order: { order_items: Array<{ item?: { image?: string | null } | null }> },
+) {
+  const img = order.order_items[0]?.item?.image ?? "";
+  return { ...order, first_item_image: img, image: img, image_url: img };
+}
+
+/** FE 품목 이미지: 각 항목 최상위 image / image_url, item 안에도 image 있음 */
+function withOrderItemImage<T extends { item?: { image?: string | null } | null }>(row: T) {
+  const img = row.item?.image ?? "";
+  return { ...row, image: img, image_url: img };
+}
+
 /** GET /api/orders - 구매 요청 목록 (page, limit, sort=request_date:desc 등) */
 export const getOrders = async (req: AuthRequest, res: Response) => {
   try {
@@ -25,7 +39,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
     else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
 
-    const [orders, total] = await Promise.all([
+    const [ordersRaw, total] = await Promise.all([
       prisma.order.findMany({
         where: { user_id: userId },
         include: { order_items: { include: { item: true } } },
@@ -36,8 +50,9 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
       prisma.order.count({ where: { user_id: userId } }),
     ]);
 
+    const data = ordersRaw.map(withOrderListImage);
     res.json({
-      data: orders,
+      data,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {
@@ -59,14 +74,19 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "주문 ID가 필요합니다." });
     }
 
-    const order = await prisma.order.findFirst({
+    const orderRaw = await prisma.order.findFirst({
       where: { id, user_id: userId },
       include: { order_items: { include: { item: true } } },
     });
-    if (!order) {
+    if (!orderRaw) {
       return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
     }
 
+    const order = {
+      ...orderRaw,
+      order_items: orderRaw.order_items.map(withOrderItemImage),
+      items: orderRaw.order_items.map(withOrderItemImage),
+    };
     res.json(order);
   } catch (error) {
     console.error("주문 상세 조회 오류:", error);
