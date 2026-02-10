@@ -88,6 +88,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
         id: user.id,
         email: user.email,
         nickname: user.email.split("@")[0],
+        is_admin: (user as { is_admin?: string }).is_admin ?? "N",
       },
       accessToken,
       refreshToken,
@@ -147,6 +148,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         id: user.id,
         email: user.email,
         nickname: user.email.split("@")[0],
+        is_admin: (user as { is_admin?: string }).is_admin ?? "N",
       },
       accessToken,
       refreshToken,
@@ -171,21 +173,18 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
-      select: {
-        id: true,
-        email: true,
-        create_at: true,
-      },
     });
 
     if (!user) {
       throw new NotFoundError("사용자를 찾을 수 없습니다.");
     }
 
+    const u = user as typeof user & { is_admin?: string };
     res.status(200).json({
-      id: user.id,
-      email: user.email,
-      nickname: user.email.split("@")[0],
+      id: u.id,
+      email: u.email,
+      nickname: u.email.split("@")[0],
+      is_admin: u.is_admin ?? "N",
     });
   } catch (error) {
     next(error);
