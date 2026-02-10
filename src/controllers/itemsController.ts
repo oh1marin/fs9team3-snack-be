@@ -2,6 +2,7 @@ import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/authMiddleware";
 import { createPresignedUpload, getPresignedDownloadUrl, getPublicObjectUrl } from "../config/upload";
+import { toAbsoluteImageUrl } from "../utils/imageUrl";
 
 const prisma = new PrismaClient();
 
@@ -45,14 +46,20 @@ export const getItems = async (req: AuthRequest, res: Response) => {
     const totalCount = await prisma.item.count({ where });
 
     // 상품 목록 조회
-    const items = await prisma.item.findMany({
+    const itemsRaw = await prisma.item.findMany({
       where,
       orderBy,
       skip,
       take: limitNum,
     });
 
-    console.log("📊 조회 결과:", { totalCount, returnedCount: items.length, items: items.map(i => ({ id: i.id, title: i.title, category_main: i.category_main, category_sub: i.category_sub })) });
+    console.log("📊 조회 결과:", { totalCount, returnedCount: itemsRaw.length, items: itemsRaw.map(i => ({ id: i.id, title: i.title, category_main: i.category_main, category_sub: i.category_sub })) });
+
+    // 이미지 링크 항상 노출: image, image_url 둘 다 (상대 경로 → 절대 URL 변환)
+    const data = itemsRaw.map((i) => {
+      const img = toAbsoluteImageUrl(i.image);
+      return { ...i, image: img, image_url: img };
+    });
 
     // 페이지네이션 정보 계산
     const totalPages = Math.ceil(totalCount / limitNum);
@@ -60,7 +67,7 @@ export const getItems = async (req: AuthRequest, res: Response) => {
     const hasPreviousPage = pageNum > 1;
 
     res.json({
-      data: items,
+      data,
       pagination: {
         page: pageNum,
         limit: limitNum,
@@ -102,12 +109,14 @@ export const getItemById = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
     }
 
-    // 프론트엔드 친화적인 응답 형식
+    // 이미지 링크 항상 노출: image, image_url 둘 다 (상대 경로 → 절대 URL 변환)
+    const img = toAbsoluteImageUrl(item.image);
     const response = {
       id: item.id,
       title: item.title,
       price: item.price,
-      image: item.image,
+      image: img,
+      image_url: img,
       category_main: item.category_main,
       category_sub: item.category_sub,
       count: item.count, // 구매 횟수
@@ -201,13 +210,15 @@ export const createItem = async (req: AuthRequest, res: Response) => {
 
     console.log("✅ 상품 등록 성공:", { id: item.id, title: item.title, category_main: item.category_main, category_sub: item.category_sub });
 
+    const img = toAbsoluteImageUrl(item.image);
     res.status(201).json({
       message: "상품이 등록되었습니다.",
       item: {
         id: item.id,
         title: item.title,
         price: item.price,
-        image: item.image,
+        image: img,
+        image_url: img,
         category_main: item.category_main,
         category_sub: item.category_sub,
         count: item.count,
@@ -301,13 +312,15 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
 
     console.log("✅ 상품 수정 성공:", { itemId, title: item.title });
 
+    const img = toAbsoluteImageUrl(item.image);
     res.json({
       message: "상품이 수정되었습니다.",
       item: {
         id: item.id,
         title: item.title,
         price: item.price,
-        image: item.image,
+        image: img,
+        image_url: img,
         category_main: item.category_main,
         category_sub: item.category_sub,
         link: item.link,
