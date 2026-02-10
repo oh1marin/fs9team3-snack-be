@@ -4,13 +4,16 @@ import { AuthRequest } from "../middleware/authMiddleware";
 
 const prisma = new PrismaClient();
 
-/* GET /api/carts - 현재 사용자 장바구니 목록 */
+/** FE 이미지 필드: 최상위 image / image_url, item 안에도 image 있음 */
+function withCartImage<T extends { item?: { image?: string | null } | null }>(row: T) {
+  const img = row.item?.image ?? "";
+  return { ...row, image: img, image_url: img };
+}
+
+/* GET /api/cart - 현재 사용자 장바구니 목록 */
 export const getCarts = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: "로그인이 필요합니다." });
-    }
 
     const carts = await prisma.cart.findMany({
       where: { user_id: userId },
@@ -18,7 +21,8 @@ export const getCarts = async (req: AuthRequest, res: Response) => {
       orderBy: { created_at: "desc" },
     });
 
-    res.json({ data: carts });
+    const items = carts.map(withCartImage);
+    res.json({ data: items, items });
   } catch (error) {
     console.error("장바구니 조회 오류:", error);
     res.status(500).json({ message: "장바구니 조회에 실패했습니다." });
@@ -29,9 +33,6 @@ export const getCarts = async (req: AuthRequest, res: Response) => {
 export const createCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: "로그인이 필요합니다." });
-    }
 
     const { item_id, quantity = 1 } = req.body;
     if (!item_id || typeof item_id !== "string") {
@@ -48,10 +49,10 @@ export const createCart = async (req: AuthRequest, res: Response) => {
 
     const cart = await prisma.cart.upsert({
       where: {
-        user_id_item_id: { user_id: userId, item_id },
+        user_id_item_id: { user_id: userId!, item_id },
       },
       create: {
-        user_id: userId,
+        user_id: userId!,
         item_id,
         quantity: qty,
         total_price,
@@ -65,7 +66,7 @@ export const createCart = async (req: AuthRequest, res: Response) => {
 
     res.status(201).json({
       message: "장바구니에 담았습니다.",
-      cart,
+      cart: withCartImage(cart),
     });
   } catch (error) {
     console.error("장바구니 담기 오류:", error);
@@ -77,9 +78,6 @@ export const createCart = async (req: AuthRequest, res: Response) => {
 export const updateCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: "로그인이 필요합니다." });
-    }
 
     const idParam = req.params.id;
     const cartId = (typeof idParam === "string" ? idParam : idParam?.[0] ?? "").trim();
@@ -110,7 +108,7 @@ export const updateCart = async (req: AuthRequest, res: Response) => {
 
     res.json({
       message: "장바구니가 수정되었습니다.",
-      cart,
+      cart: withCartImage(cart),
     });
   } catch (error) {
     console.error("장바구니 수정 오류:", error);
@@ -122,9 +120,6 @@ export const updateCart = async (req: AuthRequest, res: Response) => {
 export const deleteCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: "로그인이 필요합니다." });
-    }
 
     const idParam = req.params.id;
     const cartId = (typeof idParam === "string" ? idParam : idParam?.[0] ?? "").trim();
@@ -158,11 +153,8 @@ export const deleteCart = async (req: AuthRequest, res: Response) => {
 export const clearCart = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
-    if (!userId) {
-      return res.status(401).json({ message: "로그인이 필요합니다." });
-    }
 
-    await prisma.cart.deleteMany({ where: { user_id: userId } });
+    await prisma.cart.deleteMany({ where: { user_id: userId! } });
 
     res.json({
       success: true,

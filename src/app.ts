@@ -58,7 +58,7 @@ app.use(cookieParser());
 app.use(express.json({ limit: "10mb" })); // 이미지 base64 업로드를 위해 크기 제한 증가
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// 라우트
+// 라우트 url 경로
 app.use("/api/auth", authRoutes);
 app.use("/api/items", itemsRoutes);
 app.use("/api/users", userRoutes);
