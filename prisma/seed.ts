@@ -20,18 +20,21 @@ async function main() {
       data: {
         email: 'marin@marin.com',
         password: marinPassword,
+        is_admin: 'Y',
       },
     }),
     prisma.user.create({
       data: {
         email: 'seller2@codeit.com',
         password: defaultPassword,
+        is_admin: 'N',
       },
     }),
     prisma.user.create({
       data: {
         email: 'seller3@codeit.com',
         password: defaultPassword,
+        is_admin: 'N',
       },
     }),
   ]);
