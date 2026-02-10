@@ -44,7 +44,7 @@ export const getItems = async (req: AuthRequest, res: Response) => {
     // 전체 개수 조회
     const totalCount = await prisma.item.count({ where });
 
-    // 상품 목록 조회 (이미지 URL DB 값 그대로 반환)
+    // 상품 목록 조회
     const items = await prisma.item.findMany({
       where,
       orderBy,
