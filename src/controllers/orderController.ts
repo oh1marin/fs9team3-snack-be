@@ -62,6 +62,31 @@ function withOrderItemImage<T extends { item?: { image?: string | null } | null 
   return { ...row, image: img, image_url: img };
 }
 
+/** 주문 취소/반려 시 해당 주문 품목을 유저 장바구니에 다시 넣기 (트랜잭션 내부에서 호출) */
+async function restoreOrderItemsToCart(
+  tx: { cart: typeof prisma.cart },
+  userId: string,
+  orderItems: Array<{ item_id: string; quantity: number; item?: { price: number } | null }>,
+) {
+  for (const oi of orderItems) {
+    const price = oi.item?.price ?? 0;
+    const existing = await tx.cart.findUnique({
+      where: { user_id_item_id: { user_id: userId, item_id: oi.item_id } },
+    });
+    const newQty = (existing?.quantity ?? 0) + oi.quantity;
+    await tx.cart.upsert({
+      where: { user_id_item_id: { user_id: userId, item_id: oi.item_id } },
+      create: {
+        user_id: userId,
+        item_id: oi.item_id,
+        quantity: oi.quantity,
+        total_price: price * oi.quantity,
+      },
+      update: { quantity: newQty, total_price: price * newQty },
+    });
+  }
+}
+
 /** GET /api/orders - 구매 요청 목록 (page, limit, sort=request_date:desc 등) */
 export const getOrders = async (req: AuthRequest, res: Response) => {
   try {
@@ -105,7 +130,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** GET /api/admin/orders - 관리자용 전체 구매 요청 목록 (동일 응답: summary_title, total_quantity, items 등) */
+/** GET /api/admin/orders - 관리자용 전체 구매 요청 목록. 권한: is_admin === 'Y'만 (adminMiddleware). user_id 조건 없이 전체 사용자 주문 반환. */
 export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
   try {
     const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
@@ -121,8 +146,10 @@ export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
     else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
     else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
 
+    // 관리자: 모든 사용자의 주문 (user_id 조건 없음)
     const [ordersRaw, total] = await Promise.all([
       prisma.order.findMany({
+        where: {},
         include: { order_items: { include: { item: true } } },
         orderBy,
         skip,
@@ -288,7 +315,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** PATCH /api/admin/orders/:id - 관리자 승인/반려. body: { status: "approved" | "cancelled" } */
+/** PATCH /api/admin/orders/:id - 관리자 승인/반려. 권한: 관리자만. 대상: 어떤 사용자의 주문이든 id만 맞으면 수정. body: { status: "approved" | "cancelled" } */
 export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => {
   try {
     const idParam = req.params.id;
@@ -304,6 +331,7 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
       });
     }
 
+    // 본인 주문 아님. 해당 id의 주문만 있으면 수정 가능 (관리자)
     const order = await prisma.order.findUnique({ where: { id } });
     if (!order) {
       return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
@@ -314,7 +342,7 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
       });
     }
 
-    // 승인 시 order 업데이트 + purchase_history 삽입을 한 트랜잭션으로 처리
+    // 승인: order 업데이트 + purchase_history 삽입. 반려: order 업데이트 + 해당 주문 품목 장바구니 복원.
     const updated = await prisma.$transaction(async (tx) => {
       const o = await tx.order.update({
         where: { id },
@@ -329,6 +357,9 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
             total_amount: order.total_amount,
           },
         });
+      }
+      if (status === "cancelled") {
+        await restoreOrderItemsToCart(tx, order.user_id, o.order_items);
       }
       return o;
     });
@@ -409,7 +440,7 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** DELETE /api/orders/:id - 주문 취소 */
+/** DELETE /api/orders/:id - 요청 취소. 취소 후 해당 주문 품목을 장바구니에 다시 넣음 (트랜잭션). */
 export const cancelOrder = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -425,6 +456,7 @@ export const cancelOrder = async (req: AuthRequest, res: Response) => {
 
     const order = await prisma.order.findFirst({
       where: { id, user_id: userId },
+      include: { order_items: { include: { item: true } } },
     });
     if (!order) {
       return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
@@ -433,12 +465,18 @@ export const cancelOrder = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "대기 중인 주문만 취소할 수 있습니다." });
     }
 
-    await prisma.order.update({
-      where: { id },
-      data: { status: "cancelled" },
+    await prisma.$transaction(async (tx) => {
+      await tx.order.update({
+        where: { id },
+        data: { status: "cancelled" },
+      });
+      await restoreOrderItemsToCart(tx, userId, order.order_items);
     });
 
-    res.json({ success: true, message: "주문이 취소되었습니다." });
+    res.json({
+      success: true,
+      message: "요청이 취소되었습니다. 해당 상품이 장바구니에 다시 담겼습니다.",
+    });
   } catch (error) {
     console.error("주문 취소 오류:", error);
     res.status(500).json({ message: "주문 취소에 실패했습니다." });
