@@ -6,10 +6,27 @@ const prisma = new PrismaClient();
 
 /** FE 대표 이미지: 주문 최상위 first_item_image / image / image_url */
 function withOrderListImage(
-  order: { order_items: Array<{ item?: { image?: string | null } | null }> },
+  order: {
+    order_items: Array<{
+      item?: { image?: string | null; category_main?: string; category_sub?: string } | null;
+    }>;
+  },
 ) {
   const img = order.order_items[0]?.item?.image ?? "";
-  return { ...order, first_item_image: img, image: img, image_url: img };
+  const items = order.order_items.map((oi) => ({
+    ...oi,
+    category: oi.item?.category_sub ?? oi.item?.category_main ?? "",
+    category_sub: oi.item?.category_sub ?? "",
+    category_main: oi.item?.category_main ?? "",
+  }));
+  return {
+    ...order,
+    first_item_image: img,
+    image: img,
+    image_url: img,
+    items,
+    order_items: items,
+  };
 }
 
 /** FE 품목 이미지: 각 항목 최상위 image / image_url, item 안에도 image 있음 */
