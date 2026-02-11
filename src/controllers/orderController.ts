@@ -258,16 +258,24 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       orderItemsData.push({ item_id: row.item_id, quantity: row.quantity, total_price });
     }
 
-    const order = await prisma.order.create({
-      data: {
-        user_id: userId,
-        status: "pending",
-        total_amount,
-        order_items: {
-          create: orderItemsData,
+    // 주문 생성 + 요청한 품목 장바구니 삭제를 한 트랜잭션으로 처리 (하나라도 실패하면 둘 다 롤백)
+    const order = await prisma.$transaction(async (tx) => {
+      const created = await tx.order.create({
+        data: {
+          user_id: userId,
+          status: "pending",
+          total_amount,
+          order_items: {
+            create: orderItemsData,
+          },
         },
-      },
-      include: { order_items: { include: { item: true } } },
+        include: { order_items: { include: { item: true } } },
+      });
+      // 요청한 상품은 장바구니에서 삭제 (해당 user_id + item_id만 삭제, 남은 상품은 유지)
+      await tx.cart.deleteMany({
+        where: { user_id: userId, item_id: { in: itemIds } },
+      });
+      return created;
     });
 
     res.status(201).json({
@@ -277,6 +285,127 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
   } catch (error) {
     console.error("주문 생성 오류:", error);
     res.status(500).json({ message: "주문 생성에 실패했습니다." });
+  }
+};
+
+/** PATCH /api/admin/orders/:id - 관리자 승인/반려. body: { status: "approved" | "cancelled" } */
+export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => {
+  try {
+    const idParam = req.params.id;
+    const id = (Array.isArray(idParam) ? idParam[0] : idParam)?.trim();
+    if (!id) {
+      return res.status(400).json({ message: "주문 ID가 필요합니다." });
+    }
+
+    const status = req.body?.status;
+    if (status !== "approved" && status !== "cancelled") {
+      return res.status(400).json({
+        message: "status는 'approved'(승인) 또는 'cancelled'(반려)만 가능합니다.",
+      });
+    }
+
+    const order = await prisma.order.findUnique({ where: { id } });
+    if (!order) {
+      return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
+    }
+    if (order.status !== "pending") {
+      return res.status(400).json({
+        message: "승인 대기 중인 주문만 승인/반려할 수 있습니다.",
+      });
+    }
+
+    // 승인 시 order 업데이트 + purchase_history 삽입을 한 트랜잭션으로 처리
+    const updated = await prisma.$transaction(async (tx) => {
+      const o = await tx.order.update({
+        where: { id },
+        data: { status },
+        include: { order_items: { include: { item: true } } },
+      });
+      if (status === "approved") {
+        await (tx as any).purchaseHistory.create({
+          data: {
+            order_id: id,
+            user_id: order.user_id,
+            total_amount: order.total_amount,
+          },
+        });
+      }
+      return o;
+    });
+
+    const orderItemsWithImage = updated.order_items.map(withOrderItemImage);
+    const { summary_title, total_quantity } = getOrderSummary(updated.order_items);
+    const result = {
+      ...updated,
+      order_items: orderItemsWithImage,
+      items: orderItemsWithImage,
+      summary_title,
+      total_quantity,
+    };
+
+    res.json({
+      success: true,
+      message: status === "approved" ? "승인되었습니다." : "반려되었습니다.",
+      data: result,
+    });
+  } catch (error) {
+    console.error("주문 승인/반려 오류:", error);
+    res.status(500).json({ message: "처리에 실패했습니다." });
+  }
+};
+
+/** GET /api/orders/history - 내 구매 확정 이력 (purchase_history, 승인된 주문만) */
+export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      return res.status(401).json({ message: "로그인이 필요합니다." });
+    }
+
+    const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit), 10) || 10));
+    const skip = (page - 1) * limit;
+
+    const [list, total] = await Promise.all([
+      (prisma as any).purchaseHistory.findMany({
+        where: { user_id: userId },
+        include: {
+          order: { include: { order_items: { include: { item: true } } } },
+        },
+        orderBy: { approved_at: "desc" },
+        skip,
+        take: limit,
+      }),
+      (prisma as any).purchaseHistory.count({ where: { user_id: userId } }),
+    ]);
+
+    const data = list.map((h: any) => {
+      const order = h.order;
+      const withCat = order.order_items.map((oi: any) => ({
+        ...oi,
+        category: oi.item?.category_sub ?? oi.item?.category_main ?? "",
+      }));
+      const { summary_title, total_quantity } = getOrderSummary(order.order_items);
+      return {
+        id: h.id,
+        order_id: h.order_id,
+        total_amount: h.total_amount,
+        approved_at: h.approved_at,
+        created_at: h.created_at,
+        summary_title,
+        total_quantity,
+        items: withCat,
+        order_items: withCat,
+      };
+    });
+
+    res.json({
+      data,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error("구매 이력 조회 오류:", error);
+    res.status(500).json({ message: "구매 이력 조회에 실패했습니다." });
   }
 };
 
