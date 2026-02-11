@@ -4,28 +4,55 @@ import { AuthRequest } from "../middleware/authMiddleware";
 
 const prisma = new PrismaClient();
 
-/** FE 대표 이미지: 주문 최상위 first_item_image / image / image_url */
+/** 주문 품목으로 대표 상품명(가나다 순 첫 상품 + 및 N개)과 총 수량 계산 - 목록/상세 공통 */
+function getOrderSummary(
+  orderItems: Array<{ quantity: number; item?: { title?: string } | null }>,
+): { summary_title: string; total_quantity: number } {
+  const totalQuantity = orderItems.reduce((sum, oi) => sum + oi.quantity, 0);
+  const sorted = [...orderItems].sort((a, b) =>
+    (a.item?.title ?? "").localeCompare(b.item?.title ?? "", "ko"),
+  );
+  const firstTitle = sorted[0]?.item?.title ?? "";
+  const summaryTitle =
+    sorted.length === 0 ? "" : sorted.length === 1 ? firstTitle : `${firstTitle} 및 ${sorted.length - 1}개`;
+  return { summary_title: summaryTitle, total_quantity: totalQuantity };
+}
+
+/** FE 대표 이미지·상품명·총 수량: 주문 목록/여러 페이지에서 공통 사용 */
 function withOrderListImage(
   order: {
     order_items: Array<{
-      item?: { image?: string | null; category_main?: string; category_sub?: string } | null;
+      quantity: number;
+      item?: {
+        image?: string | null;
+        title?: string;
+        category_main?: string;
+        category_sub?: string;
+      } | null;
     }>;
   },
 ) {
-  const img = order.order_items[0]?.item?.image ?? "";
-  const items = order.order_items.map((oi) => ({
+  const withCategory = order.order_items.map((oi) => ({
     ...oi,
     category: oi.item?.category_sub ?? oi.item?.category_main ?? "",
     category_sub: oi.item?.category_sub ?? "",
     category_main: oi.item?.category_main ?? "",
   }));
+
+  const { summary_title, total_quantity } = getOrderSummary(withCategory);
+  const sorted = [...withCategory].sort((a, b) =>
+    (a.item?.title ?? "").localeCompare(b.item?.title ?? "", "ko"),
+  );
+  const img = sorted[0]?.item?.image ?? order.order_items[0]?.item?.image ?? "";
   return {
     ...order,
     first_item_image: img,
     image: img,
     image_url: img,
-    items,
-    order_items: items,
+    items: withCategory,
+    order_items: withCategory,
+    summary_title,
+    total_quantity,
   };
 }
 
@@ -78,6 +105,76 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
   }
 };
 
+/** GET /api/admin/orders - 관리자용 전체 구매 요청 목록 (동일 응답: summary_title, total_quantity, items 등) */
+export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
+  try {
+    const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
+    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit), 10) || 10));
+    const sortParam = String(req.query.sort || "request_date:desc").toLowerCase();
+    const skip = (page - 1) * limit;
+
+    let orderBy: { request_date?: "asc" | "desc"; created_at?: "asc" | "desc" } = {
+      request_date: "desc",
+    };
+    if (sortParam === "request_date:asc") orderBy = { request_date: "asc" };
+    else if (sortParam === "request_date:desc") orderBy = { request_date: "desc" };
+    else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
+    else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
+
+    const [ordersRaw, total] = await Promise.all([
+      prisma.order.findMany({
+        include: { order_items: { include: { item: true } } },
+        orderBy,
+        skip,
+        take: limit,
+      }),
+      prisma.order.count(),
+    ]);
+
+    const data = ordersRaw.map(withOrderListImage);
+    res.json({
+      data,
+      pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    });
+  } catch (error) {
+    console.error("관리자 주문 목록 조회 오류:", error);
+    res.status(500).json({ message: "주문 목록 조회에 실패했습니다." });
+  }
+};
+
+/** GET /api/admin/orders/:id - 관리자용 주문 상세 (아무 주문이나 조회, 동일 응답 형식) */
+export const getOrderByIdAdmin = async (req: AuthRequest, res: Response) => {
+  try {
+    const idParam = req.params.id;
+    const id = (Array.isArray(idParam) ? idParam[0] : idParam)?.trim();
+    if (!id) {
+      return res.status(400).json({ message: "주문 ID가 필요합니다." });
+    }
+
+    const orderRaw = await prisma.order.findUnique({
+      where: { id },
+      include: { order_items: { include: { item: true } } },
+    });
+    if (!orderRaw) {
+      return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
+    }
+
+    const orderItemsWithImage = orderRaw.order_items.map(withOrderItemImage);
+    const { summary_title, total_quantity } = getOrderSummary(orderRaw.order_items);
+    const order = {
+      ...orderRaw,
+      order_items: orderItemsWithImage,
+      items: orderItemsWithImage,
+      summary_title,
+      total_quantity,
+    };
+    res.json(order);
+  } catch (error) {
+    console.error("관리자 주문 상세 조회 오류:", error);
+    res.status(500).json({ message: "주문 조회에 실패했습니다." });
+  }
+};
+
 /** GET /api/orders/:id - 주문 상세 */
 export const getOrderById = async (req: AuthRequest, res: Response) => {
   try {
@@ -100,10 +197,14 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
       return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
     }
 
+    const orderItemsWithImage = orderRaw.order_items.map(withOrderItemImage);
+    const { summary_title, total_quantity } = getOrderSummary(orderRaw.order_items);
     const order = {
       ...orderRaw,
-      order_items: orderRaw.order_items.map(withOrderItemImage),
-      items: orderRaw.order_items.map(withOrderItemImage),
+      order_items: orderItemsWithImage,
+      items: orderItemsWithImage,
+      summary_title,
+      total_quantity,
     };
     res.json(order);
   } catch (error) {
