@@ -1,7 +1,11 @@
 import { PrismaClient } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
+
+/** User create payload (is_admin 포함, 로컬 Prisma 타입 미반영 시 대비) */
+type UserSeedData = Prisma.UserCreateInput & { is_admin?: 'Y' | 'N' };
 
 async function main() {
   console.log(' 시드 데이터 생성 시작...');
@@ -21,21 +25,21 @@ async function main() {
         email: 'marin@marin.com',
         password: marinPassword,
         is_admin: 'Y',
-      },
+      } as UserSeedData,
     }),
     prisma.user.create({
       data: {
         email: 'seller2@codeit.com',
         password: defaultPassword,
         is_admin: 'N',
-      },
+      } as UserSeedData,
     }),
     prisma.user.create({
       data: {
         email: 'seller3@codeit.com',
         password: defaultPassword,
         is_admin: 'N',
-      },
+      } as UserSeedData,
     }),
   ]);
 

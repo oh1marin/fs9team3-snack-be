@@ -5,9 +5,10 @@ import { AuthRequest } from "../middleware/authMiddleware";
 const prisma = new PrismaClient();
 
 /** FE 이미지 필드: 최상위 image / image_url, item 안에도 image 있음 */
-function withCartImage<T extends { item?: { image?: string | null } | null }>(row: T) {
+function withCartImage<T extends { item?: { image?: string | null; price?: number } | null }>(row: T) {
   const img = row.item?.image ?? "";
-  return { ...row, image: img, image_url: img };
+  const unitPrice = row.item?.price ?? 0;
+  return { ...row, image: img, image_url: img, price: unitPrice, unit_price: unitPrice };
 }
 
 /* GET /api/cart - 현재 사용자 장바구니 목록 */
