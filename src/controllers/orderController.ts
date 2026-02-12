@@ -248,8 +248,9 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
-    // body에 items 없으면 현재 장바구니로 주문 생성
+    // body에 items 없거나 빈 배열이면 현재 장바구니로 주문 생성 (items: [] 보내면 빈 주문 방지)
     const bodyItems = req.body?.items as Array<{ item_id: string; quantity?: number }> | undefined;
+    console.log("bodyItems",bodyItems)
     let items: { item_id: string; quantity: number }[];
 
     if (Array.isArray(bodyItems) && bodyItems.length > 0) {
@@ -259,7 +260,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       }));
     } else {
       const carts = await prisma.cart.findMany({
-        where: { user_id: userId },
+        where: { user_id: userId, },
         include: { item: true },
       });
       if (carts.length === 0) {
@@ -342,22 +343,20 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
       });
     }
 
-    // 승인: order 업데이트 + purchase_history 삽입. 반려: order 업데이트 + 해당 주문 품목 장바구니 복원.
+    // 승인/반려를 주문 테이블 컬럼(approved_at, canceled_at)에 직접 반영.
+    // 반려 시 해당 주문 품목은 장바구니에 복원.
     const updated = await prisma.$transaction(async (tx) => {
+      const now = new Date();
+      const patchData =
+        status === "approved"
+          ? { status, approved_at: now, canceled_at: null }
+          : { status, canceled_at: now };
+
       const o = await tx.order.update({
         where: { id },
-        data: { status },
+        data: patchData,
         include: { order_items: { include: { item: true } } },
       });
-      if (status === "approved") {
-        await (tx as any).purchaseHistory.create({
-          data: {
-            order_id: id,
-            user_id: order.user_id,
-            total_amount: order.total_amount,
-          },
-        });
-      }
       if (status === "cancelled") {
         await restoreOrderItemsToCart(tx, order.user_id, o.order_items);
       }
@@ -385,7 +384,7 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
   }
 };
 
-/** GET /api/orders/history - 내 구매 확정 이력 (purchase_history, 승인된 주문만) */
+/** GET /api/orders/history - 내 구매 확정 이력 (주문 중 승인된 건) */
 export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
@@ -397,32 +396,30 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
     const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit), 10) || 10));
     const skip = (page - 1) * limit;
 
+    const historyWhere = { user_id: userId, status: "approved" as const };
     const [list, total] = await Promise.all([
-      (prisma as any).purchaseHistory.findMany({
-        where: { user_id: userId },
-        include: {
-          order: { include: { order_items: { include: { item: true } } } },
-        },
+      prisma.order.findMany({
+        where: historyWhere,
+        include: { order_items: { include: { item: true } } },
         orderBy: { approved_at: "desc" },
         skip,
         take: limit,
       }),
-      (prisma as any).purchaseHistory.count({ where: { user_id: userId } }),
+      prisma.order.count({ where: historyWhere }),
     ]);
 
-    const data = list.map((h: any) => {
-      const order = h.order;
-      const withCat = order.order_items.map((oi: any) => ({
+    const data = list.map((order) => {
+      const withCat = order.order_items.map((oi) => ({
         ...oi,
         category: oi.item?.category_sub ?? oi.item?.category_main ?? "",
       }));
       const { summary_title, total_quantity } = getOrderSummary(order.order_items);
       return {
-        id: h.id,
-        order_id: h.order_id,
-        total_amount: h.total_amount,
-        approved_at: h.approved_at,
-        created_at: h.created_at,
+        id: order.id,
+        order_id: order.id,
+        total_amount: order.total_amount,
+        approved_at: order.approved_at,
+        created_at: order.created_at,
         summary_title,
         total_quantity,
         items: withCat,
@@ -468,7 +465,7 @@ export const cancelOrder = async (req: AuthRequest, res: Response) => {
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
         where: { id },
-        data: { status: "cancelled" },
+        data: { status: "cancelled", canceled_at: new Date() },
       });
       await restoreOrderItemsToCart(tx, userId, order.order_items);
     });

@@ -28,15 +28,20 @@ const corsOriginList = process.env.CORS_ORIGIN
       "https://marin-snack.store",
       "https://www.marin-snack.store",
     ];
-const corsOriginHosts = corsOriginList.map((u) => {
-  try {
-    return new URL(u).hostname;
-  } catch {
-    return "";
-  }
-}).filter(Boolean);
+const corsOriginHosts = corsOriginList
+  .map((u) => {
+    try {
+      return new URL(u).hostname;
+    } catch {
+      return "";
+    }
+  })
+  .filter(Boolean);
 
-function corsOrigin(origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) {
+function corsOrigin(
+  origin: string | undefined,
+  cb: (err: Error | null, allow?: boolean) => void,
+) {
   if (!origin) return cb(null, true);
   if (corsOriginList.includes(origin)) return cb(null, true);
   try {
@@ -53,7 +58,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 204,
-  })
+  }),
 );
 app.use(cookieParser());
 app.use(express.json({ limit: "10mb" })); // 이미지 base64 업로드를 위해 크기 제한 증가
@@ -69,6 +74,7 @@ app.use("/api/admin", adminRoutes);
 
 // Health check
 app.get("/", (req, res) => {
+  console.log("health check");
   res.json({
     message: "Snack Backend API",
     status: "running",
@@ -82,7 +88,7 @@ app.use(
   swaggerUi.setup(swaggerSpec, {
     customSiteTitle: "Snack API Docs",
     customCss: ".swagger-ui .topbar { display: none }",
-  })
+  }),
 );
 
 // 404 핸들러

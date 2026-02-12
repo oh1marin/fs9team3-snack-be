@@ -13,8 +13,8 @@ import { uploadToS3 } from "../config/upload";
 
 const router = Router();
 
-// 상품 목록 조회 (인증 없이 허용 - cross-origin 쿠키 미전송 대응)
-router.get("/", getItems);
+// 상품 목록 조회 (mine=1일 때만 토큰 필요, 그 외에는 인증 없이 허용)
+router.get("/", optionalAuthMiddleware, getItems);
 
 // Presigned 업로드 URL 발급 (인증 필요)
 router.get("/presigned-upload-url", authMiddleware, getPresignedUploadUrl);
