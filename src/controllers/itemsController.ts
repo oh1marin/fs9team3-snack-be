@@ -12,12 +12,21 @@ function parseItemId(raw: unknown) {
   return v;
 }
 
-// 상품 목록 조회 (페이지네이션 지원)
+// 상품 목록 조회 (페이지네이션 지원, mine=1 시 본인 등록 상품만)
 export const getItems = async (req: AuthRequest, res: Response) => {
   try {
-    const { category_main, category_sub, sort, page = "1", limit = "8" } = req.query;
+    const { category_main, category_sub, sort, page = "1", limit = "8", mine } = req.query;
 
     const where: any = {};
+
+    // mine=1: 현재 로그인한 사용자가 등록한 상품만 조회
+    const mineOnly = mine === "1" || mine === 1;
+    if (mineOnly) {
+      if (!req.user?.id) {
+        return res.status(401).json({ message: "로그인이 필요합니다." });
+      }
+      where.user_id = req.user.id;
+    }
 
     // 카테고리 필터링
     if (typeof category_main === "string" && category_main.length > 0) {
