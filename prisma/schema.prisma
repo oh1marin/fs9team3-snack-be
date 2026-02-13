@@ -62,17 +62,18 @@ enum OrderStatus {
 }
 
 model Order {
-  id           String      @id @default(uuid())
-  user_id      String
-  status       OrderStatus @default(pending)
-  request_date DateTime @default(now())
-  total_amount Int      @default(0)
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  approved_at  DateTime?
-  canceled_at  DateTime?
-  user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  order_items      OrderItem[]
+  id                   String      @id @default(uuid())
+  user_id              String
+  status               OrderStatus @default(pending)
+  request_date         DateTime    @default(now())
+  total_amount         Int         @default(0)
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
+  approved_at          DateTime?
+  canceled_at          DateTime?
+  is_instant_purchase  Boolean     @default(false)
+  user                 User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  order_items          OrderItem[]
 
   @@map("orders")
 }

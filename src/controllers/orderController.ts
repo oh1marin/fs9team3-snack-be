@@ -270,12 +270,26 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** POST /api/orders - 주문 생성 (장바구니 기반 또는 body로 items 전달) */
+/** POST /api/orders - 주문 생성 (장바구니 기반 또는 body로 items 전달). body.instant_purchase === true 이면 관리자만 즉시 승인 주문 생성 */
 export const createOrder = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
     if (!userId) {
       return res.status(401).json({ message: "로그인이 필요합니다." });
+    }
+
+    const instantPurchase = req.body?.instant_purchase === true;
+
+    if (instantPurchase) {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { is_admin: true },
+      });
+      if (user?.is_admin !== "Y") {
+        return res
+          .status(403)
+          .json({ message: "즉시 구매는 관리자만 가능합니다." });
+      }
     }
 
     // body에 items 없거나 빈 배열이면 현재 장바구니로 주문 생성 (items: [] 보내면 빈 주문 방지)
@@ -328,17 +342,22 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       });
     }
 
+    const now = new Date();
+    const isInstant = instantPurchase;
+
     // 주문 생성 + 요청한 품목 장바구니 삭제를 한 트랜잭션으로 처리 (하나라도 실패하면 둘 다 롤백)
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.order.create({
         data: {
           user_id: userId,
-          status: OrderStatus.pending,
+          status: isInstant ? OrderStatus.approved : OrderStatus.pending,
           total_amount,
+          ...(isInstant && { approved_at: now }),
+          ...(isInstant && { is_instant_purchase: true }),
           order_items: {
             create: orderItemsData,
           },
-        },
+        } as Parameters<typeof tx.order.create>[0]["data"],
         include: { order_items: { include: { item: true } } },
       });
       // 요청한 상품은 장바구니에서 삭제 (해당 user_id + item_id만 삭제, 남은 상품은 유지)
@@ -481,6 +500,9 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
         total_quantity,
         items: withCat,
         order_items: withCat,
+        is_instant_purchase:
+          (order as { is_instant_purchase?: boolean }).is_instant_purchase ??
+          false,
       };
     });
 
