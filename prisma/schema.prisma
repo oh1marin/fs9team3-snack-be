@@ -17,7 +17,6 @@ model User {
   items        Item[]
   carts        Cart[]
   orders       Order[]
-  purchase_histories PurchaseHistory[]
 
   @@map("users")
 }
@@ -56,10 +55,16 @@ model Cart {
   @@map("carts")
 }
 
+enum OrderStatus {
+  pending
+  approved
+  canceled
+}
+
 model Order {
-  id           String   @id @default(uuid())
+  id           String      @id @default(uuid())
   user_id      String
-  status       String   @default("pending")
+  status       OrderStatus @default(pending)
   request_date DateTime @default(now())
   total_amount Int      @default(0)
   created_at   DateTime @default(now())
@@ -68,22 +73,8 @@ model Order {
   canceled_at  DateTime?
   user             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
   order_items      OrderItem[]
-  purchase_history PurchaseHistory?
 
   @@map("orders")
-}
-
-model PurchaseHistory {
-  id           String   @id @default(uuid())
-  order_id     String   @unique
-  user_id      String
-  total_amount Int      @default(0)
-  approved_at  DateTime @default(now())
-  created_at   DateTime @default(now())
-  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@map("purchase_history")
 }
 
 model OrderItem {

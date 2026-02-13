@@ -1,5 +1,5 @@
 import { Response } from "express";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, OrderStatus } from "@prisma/client";
 import { AuthRequest } from "../middleware/authMiddleware";
 
 const prisma = new PrismaClient();
@@ -14,24 +14,26 @@ function getOrderSummary(
   );
   const firstTitle = sorted[0]?.item?.title ?? "";
   const summaryTitle =
-    sorted.length === 0 ? "" : sorted.length === 1 ? firstTitle : `${firstTitle} 및 ${sorted.length - 1}개`;
+    sorted.length === 0
+      ? ""
+      : sorted.length === 1
+        ? firstTitle
+        : `${firstTitle} 및 ${sorted.length - 1}개`;
   return { summary_title: summaryTitle, total_quantity: totalQuantity };
 }
 
 /** FE 대표 이미지·상품명·총 수량: 주문 목록/여러 페이지에서 공통 사용 */
-function withOrderListImage(
-  order: {
-    order_items: Array<{
-      quantity: number;
-      item?: {
-        image?: string | null;
-        title?: string;
-        category_main?: string;
-        category_sub?: string;
-      } | null;
-    }>;
-  },
-) {
+function withOrderListImage(order: {
+  order_items: Array<{
+    quantity: number;
+    item?: {
+      image?: string | null;
+      title?: string;
+      category_main?: string;
+      category_sub?: string;
+    } | null;
+  }>;
+}) {
   const withCategory = order.order_items.map((oi) => ({
     ...oi,
     category: oi.item?.category_sub ?? oi.item?.category_main ?? "",
@@ -57,7 +59,9 @@ function withOrderListImage(
 }
 
 /** FE 품목 이미지: 각 항목 최상위 image / image_url, item 안에도 image 있음 */
-function withOrderItemImage<T extends { item?: { image?: string | null } | null }>(row: T) {
+function withOrderItemImage<
+  T extends { item?: { image?: string | null } | null },
+>(row: T) {
   const img = row.item?.image ?? "";
   return { ...row, image: img, image_url: img };
 }
@@ -66,7 +70,11 @@ function withOrderItemImage<T extends { item?: { image?: string | null } | null 
 async function restoreOrderItemsToCart(
   tx: { cart: typeof prisma.cart },
   userId: string,
-  orderItems: Array<{ item_id: string; quantity: number; item?: { price: number } | null }>,
+  orderItems: Array<{
+    item_id: string;
+    quantity: number;
+    item?: { price: number } | null;
+  }>,
 ) {
   for (const oi of orderItems) {
     const price = oi.item?.price ?? 0;
@@ -96,15 +104,24 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     }
 
     const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit), 10) || 10));
-    const sortParam = String(req.query.sort || "request_date:desc").toLowerCase();
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(String(req.query.limit), 10) || 10),
+    );
+    const sortParam = String(
+      req.query.sort || "request_date:desc",
+    ).toLowerCase();
     const skip = (page - 1) * limit;
 
-    let orderBy: { request_date?: "asc" | "desc"; created_at?: "asc" | "desc" } = {
+    let orderBy: {
+      request_date?: "asc" | "desc";
+      created_at?: "asc" | "desc";
+    } = {
       request_date: "desc",
     };
     if (sortParam === "request_date:asc") orderBy = { request_date: "asc" };
-    else if (sortParam === "request_date:desc") orderBy = { request_date: "desc" };
+    else if (sortParam === "request_date:desc")
+      orderBy = { request_date: "desc" };
     else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
     else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
 
@@ -134,15 +151,24 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
 export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
   try {
     const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit), 10) || 10));
-    const sortParam = String(req.query.sort || "request_date:desc").toLowerCase();
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(String(req.query.limit), 10) || 10),
+    );
+    const sortParam = String(
+      req.query.sort || "request_date:desc",
+    ).toLowerCase();
     const skip = (page - 1) * limit;
 
-    let orderBy: { request_date?: "asc" | "desc"; created_at?: "asc" | "desc" } = {
+    let orderBy: {
+      request_date?: "asc" | "desc";
+      created_at?: "asc" | "desc";
+    } = {
       request_date: "desc",
     };
     if (sortParam === "request_date:asc") orderBy = { request_date: "asc" };
-    else if (sortParam === "request_date:desc") orderBy = { request_date: "desc" };
+    else if (sortParam === "request_date:desc")
+      orderBy = { request_date: "desc" };
     else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
     else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
 
@@ -187,7 +213,9 @@ export const getOrderByIdAdmin = async (req: AuthRequest, res: Response) => {
     }
 
     const orderItemsWithImage = orderRaw.order_items.map(withOrderItemImage);
-    const { summary_title, total_quantity } = getOrderSummary(orderRaw.order_items);
+    const { summary_title, total_quantity } = getOrderSummary(
+      orderRaw.order_items,
+    );
     const order = {
       ...orderRaw,
       order_items: orderItemsWithImage,
@@ -225,7 +253,9 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
     }
 
     const orderItemsWithImage = orderRaw.order_items.map(withOrderItemImage);
-    const { summary_title, total_quantity } = getOrderSummary(orderRaw.order_items);
+    const { summary_title, total_quantity } = getOrderSummary(
+      orderRaw.order_items,
+    );
     const order = {
       ...orderRaw,
       order_items: orderItemsWithImage,
@@ -249,8 +279,10 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     }
 
     // body에 items 없거나 빈 배열이면 현재 장바구니로 주문 생성 (items: [] 보내면 빈 주문 방지)
-    const bodyItems = req.body?.items as Array<{ item_id: string; quantity?: number }> | undefined;
-    console.log("bodyItems",bodyItems)
+    const bodyItems = req.body?.items as
+      | Array<{ item_id: string; quantity?: number }>
+      | undefined;
+    console.log("bodyItems", bodyItems);
     let items: { item_id: string; quantity: number }[];
 
     if (Array.isArray(bodyItems) && bodyItems.length > 0) {
@@ -260,7 +292,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       }));
     } else {
       const carts = await prisma.cart.findMany({
-        where: { user_id: userId, },
+        where: { user_id: userId },
         include: { item: true },
       });
       if (carts.length === 0) {
@@ -270,20 +302,30 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     }
 
     const itemIds = items.map((i) => i.item_id);
-    const itemMap = await prisma.item.findMany({ where: { id: { in: itemIds } } }).then((list) =>
-      Object.fromEntries(list.map((it) => [it.id, it])),
-    );
+    const itemMap = await prisma.item
+      .findMany({ where: { id: { in: itemIds } } })
+      .then((list) => Object.fromEntries(list.map((it) => [it.id, it])));
 
     let total_amount = 0;
-    const orderItemsData: { item_id: string; quantity: number; total_price: number }[] = [];
+    const orderItemsData: {
+      item_id: string;
+      quantity: number;
+      total_price: number;
+    }[] = [];
     for (const row of items) {
       const item = itemMap[row.item_id];
       if (!item) {
-        return res.status(400).json({ message: `상품을 찾을 수 없습니다: ${row.item_id}` });
+        return res
+          .status(400)
+          .json({ message: `상품을 찾을 수 없습니다: ${row.item_id}` });
       }
       const total_price = item.price * row.quantity;
       total_amount += total_price;
-      orderItemsData.push({ item_id: row.item_id, quantity: row.quantity, total_price });
+      orderItemsData.push({
+        item_id: row.item_id,
+        quantity: row.quantity,
+        total_price,
+      });
     }
 
     // 주문 생성 + 요청한 품목 장바구니 삭제를 한 트랜잭션으로 처리 (하나라도 실패하면 둘 다 롤백)
@@ -291,7 +333,7 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       const created = await tx.order.create({
         data: {
           user_id: userId,
-          status: "pending",
+          status: OrderStatus.pending,
           total_amount,
           order_items: {
             create: orderItemsData,
@@ -317,7 +359,10 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
 };
 
 /** PATCH /api/admin/orders/:id - 관리자 승인/반려. 권한: 관리자만. 대상: 어떤 사용자의 주문이든 id만 맞으면 수정. body: { status: "approved" | "cancelled" } */
-export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => {
+export const patchOrderStatusAdmin = async (
+  req: AuthRequest,
+  res: Response,
+) => {
   try {
     const idParam = req.params.id;
     const id = (Array.isArray(idParam) ? idParam[0] : idParam)?.trim();
@@ -328,7 +373,8 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
     const status = req.body?.status;
     if (status !== "approved" && status !== "cancelled") {
       return res.status(400).json({
-        message: "status는 'approved'(승인) 또는 'cancelled'(반려)만 가능합니다.",
+        message:
+          "status는 'approved'(승인) 또는 'cancelled'(반려)만 가능합니다.",
       });
     }
 
@@ -337,7 +383,7 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
     if (!order) {
       return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
     }
-    if (order.status !== "pending") {
+    if (order.status !== OrderStatus.pending) {
       return res.status(400).json({
         message: "승인 대기 중인 주문만 승인/반려할 수 있습니다.",
       });
@@ -349,8 +395,12 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
       const now = new Date();
       const patchData =
         status === "approved"
-          ? { status, approved_at: now, canceled_at: null }
-          : { status, canceled_at: now };
+          ? {
+              status: OrderStatus.approved,
+              approved_at: now,
+              canceled_at: null,
+            }
+          : { status: OrderStatus.canceled, canceled_at: now };
 
       const o = await tx.order.update({
         where: { id },
@@ -364,7 +414,9 @@ export const patchOrderStatusAdmin = async (req: AuthRequest, res: Response) => 
     });
 
     const orderItemsWithImage = updated.order_items.map(withOrderItemImage);
-    const { summary_title, total_quantity } = getOrderSummary(updated.order_items);
+    const { summary_title, total_quantity } = getOrderSummary(
+      updated.order_items,
+    );
     const result = {
       ...updated,
       order_items: orderItemsWithImage,
@@ -393,10 +445,13 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
     }
 
     const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
-    const limit = Math.min(50, Math.max(1, parseInt(String(req.query.limit), 10) || 10));
+    const limit = Math.min(
+      50,
+      Math.max(1, parseInt(String(req.query.limit), 10) || 10),
+    );
     const skip = (page - 1) * limit;
 
-    const historyWhere = { user_id: userId, status: "approved" as const };
+    const historyWhere = { user_id: userId, status: OrderStatus.approved };
     const [list, total] = await Promise.all([
       prisma.order.findMany({
         where: historyWhere,
@@ -413,7 +468,9 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
         ...oi,
         category: oi.item?.category_sub ?? oi.item?.category_main ?? "",
       }));
-      const { summary_title, total_quantity } = getOrderSummary(order.order_items);
+      const { summary_title, total_quantity } = getOrderSummary(
+        order.order_items,
+      );
       return {
         id: order.id,
         order_id: order.id,
@@ -458,14 +515,16 @@ export const cancelOrder = async (req: AuthRequest, res: Response) => {
     if (!order) {
       return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
     }
-    if (order.status !== "pending") {
-      return res.status(400).json({ message: "대기 중인 주문만 취소할 수 있습니다." });
+    if (order.status !== OrderStatus.pending) {
+      return res
+        .status(400)
+        .json({ message: "대기 중인 주문만 취소할 수 있습니다." });
     }
 
     await prisma.$transaction(async (tx) => {
       await tx.order.update({
         where: { id },
-        data: { status: "cancelled", canceled_at: new Date() },
+        data: { status: OrderStatus.canceled, canceled_at: new Date() },
       });
       await restoreOrderItemsToCart(tx, userId, order.order_items);
     });

@@ -48,7 +48,7 @@ export const createCart = async (req: AuthRequest, res: Response) => {
 
     const total_price = item.price * qty;
 
-    const cart = await prisma.cart.upsert({
+    await prisma.cart.upsert({
       where: {
         user_id_item_id: { user_id: userId!, item_id },
       },
@@ -65,9 +65,18 @@ export const createCart = async (req: AuthRequest, res: Response) => {
       include: { item: true },
     });
 
+    // FE CartContext가 res.items로 전체 개수 동기화하므로, 추가 후 전체 장바구니 반환
+    const carts = await prisma.cart.findMany({
+      where: { user_id: userId },
+      include: { item: true },
+      orderBy: { created_at: "desc" },
+    });
+    const items = carts.map(withCartImage);
+
     res.status(201).json({
       message: "장바구니에 담았습니다.",
-      cart: withCartImage(cart),
+      items,
+      data: items,
     });
   } catch (error) {
     console.error("장바구니 담기 오류:", error);
