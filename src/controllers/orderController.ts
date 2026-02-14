@@ -113,10 +113,9 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     ).toLowerCase();
     const skip = (page - 1) * limit;
 
-    let orderBy: {
-      request_date?: "asc" | "desc";
-      created_at?: "asc" | "desc";
-    } = {
+    let orderBy:
+      | { request_date?: "asc" | "desc"; created_at?: "asc" | "desc" }
+      | { total_amount?: "asc" | "desc" } = {
       request_date: "desc",
     };
     if (sortParam === "request_date:asc") orderBy = { request_date: "asc" };
@@ -124,6 +123,10 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
       orderBy = { request_date: "desc" };
     else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
     else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
+    else if (sortParam === "order_amount:asc")
+      orderBy = { total_amount: "asc" };
+    else if (sortParam === "order_amount:desc")
+      orderBy = { total_amount: "desc" };
 
     const [ordersRaw, total] = await Promise.all([
       prisma.order.findMany({
@@ -161,10 +164,9 @@ export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
     const statusParam = String(req.query.status || "pending").toLowerCase();
     const skip = (page - 1) * limit;
 
-    let orderBy: {
-      request_date?: "asc" | "desc";
-      created_at?: "asc" | "desc";
-    } = {
+    let orderBy:
+      | { request_date?: "asc" | "desc"; created_at?: "asc" | "desc" }
+      | { total_amount?: "asc" | "desc" } = {
       request_date: "desc",
     };
     if (sortParam === "request_date:asc") orderBy = { request_date: "asc" };
@@ -172,6 +174,10 @@ export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
       orderBy = { request_date: "desc" };
     else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
     else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
+    else if (sortParam === "order_amount:asc")
+      orderBy = { total_amount: "asc" };
+    else if (sortParam === "order_amount:desc")
+      orderBy = { total_amount: "desc" };
 
     const where =
       statusParam === "approved"
@@ -183,7 +189,10 @@ export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
     const [ordersRaw, total] = await Promise.all([
       prisma.order.findMany({
         where,
-        include: { order_items: { include: { item: true } } },
+        include: {
+          order_items: { include: { item: true } },
+          user: { select: { email: true } },
+        },
         orderBy,
         skip,
         take: limit,
@@ -191,11 +200,16 @@ export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
       prisma.order.count({ where }),
     ]);
 
-    const data = ordersRaw.map((o) => ({
-      ...withOrderListImage(o),
-      is_instant_purchase:
-        (o as { is_instant_purchase?: boolean }).is_instant_purchase ?? false,
-    }));
+    const data = ordersRaw.map((o) => {
+      const user = o.user as { email?: string } | null;
+      const requester = user?.email?.split("@")[0] ?? "";
+      return {
+        ...withOrderListImage(o),
+        requester,
+        is_instant_purchase:
+          (o as { is_instant_purchase?: boolean }).is_instant_purchase ?? false,
+      };
+    });
     res.json({
       data,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
@@ -217,7 +231,10 @@ export const getOrderByIdAdmin = async (req: AuthRequest, res: Response) => {
 
     const orderRaw = await prisma.order.findUnique({
       where: { id },
-      include: { order_items: { include: { item: true } } },
+      include: {
+        order_items: { include: { item: true } },
+        user: { select: { email: true } },
+      },
     });
     if (!orderRaw) {
       return res.status(404).json({ message: "주문을 찾을 수 없습니다." });
@@ -227,12 +244,15 @@ export const getOrderByIdAdmin = async (req: AuthRequest, res: Response) => {
     const { summary_title, total_quantity } = getOrderSummary(
       orderRaw.order_items,
     );
+    const requester =
+      (orderRaw.user as { email?: string })?.email?.split("@")[0] ?? "";
     const order = {
       ...orderRaw,
       order_items: orderItemsWithImage,
       items: orderItemsWithImage,
       summary_title,
       total_quantity,
+      requester,
       is_instant_purchase:
         (orderRaw as { is_instant_purchase?: boolean }).is_instant_purchase ??
         false,
