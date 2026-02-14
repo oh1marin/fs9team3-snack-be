@@ -147,7 +147,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
   }
 };
 
-/** GET /api/admin/orders - 관리자용 전체 구매 요청 목록. 권한: is_admin === 'Y'만 (adminMiddleware). user_id 조건 없이 전체 사용자 주문 반환. */
+/** GET /api/admin/orders - 관리자용 주문 목록. query.status: pending(기본, 구매요청관리) | approved(구매내역) | all. 응답에 is_instant_purchase 포함. */
 export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
   try {
     const page = Math.max(1, parseInt(String(req.query.page), 10) || 1);
@@ -158,6 +158,7 @@ export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
     const sortParam = String(
       req.query.sort || "request_date:desc",
     ).toLowerCase();
+    const statusParam = String(req.query.status || "pending").toLowerCase();
     const skip = (page - 1) * limit;
 
     let orderBy: {
@@ -172,19 +173,29 @@ export const getOrdersAdmin = async (req: AuthRequest, res: Response) => {
     else if (sortParam === "created_at:asc") orderBy = { created_at: "asc" };
     else if (sortParam === "created_at:desc") orderBy = { created_at: "desc" };
 
-    // 관리자: 모든 사용자의 주문 (user_id 조건 없음)
+    const where =
+      statusParam === "approved"
+        ? { status: OrderStatus.approved }
+        : statusParam === "all"
+          ? {}
+          : { status: OrderStatus.pending };
+
     const [ordersRaw, total] = await Promise.all([
       prisma.order.findMany({
-        where: {},
+        where,
         include: { order_items: { include: { item: true } } },
         orderBy,
         skip,
         take: limit,
       }),
-      prisma.order.count(),
+      prisma.order.count({ where }),
     ]);
 
-    const data = ordersRaw.map(withOrderListImage);
+    const data = ordersRaw.map((o) => ({
+      ...withOrderListImage(o),
+      is_instant_purchase:
+        (o as { is_instant_purchase?: boolean }).is_instant_purchase ?? false,
+    }));
     res.json({
       data,
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
@@ -222,6 +233,9 @@ export const getOrderByIdAdmin = async (req: AuthRequest, res: Response) => {
       items: orderItemsWithImage,
       summary_title,
       total_quantity,
+      is_instant_purchase:
+        (orderRaw as { is_instant_purchase?: boolean }).is_instant_purchase ??
+        false,
     };
     res.json(order);
   } catch (error) {
@@ -262,6 +276,9 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
       items: orderItemsWithImage,
       summary_title,
       total_quantity,
+      is_instant_purchase:
+        (orderRaw as { is_instant_purchase?: boolean }).is_instant_purchase ??
+        false,
     };
     res.json(order);
   } catch (error) {
