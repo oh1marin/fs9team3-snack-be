@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from "express";
 import prisma from "../utils/prisma";
-import { ensureMonthlyBudget, getOrCreateInitialBudget } from "../cron/budgetCron";
+import {
+  ensureMonthlyBudget,
+  getOrCreateInitialBudget,
+  updateInitialBudget,
+} from "../cron/budgetCron";
 import { BadRequestError } from "../utils/customError";
 
 function getCurrentYearMonth() {
@@ -15,7 +19,7 @@ function getCurrentYearMonth() {
 export const getCurrentBudget = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { year, month } = getCurrentYearMonth();
@@ -55,7 +59,7 @@ export const getCurrentBudget = async (
 export const patchCurrentBudget = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { budget_amount, spent_amount, initial_budget } = req.body;
@@ -92,14 +96,16 @@ export const patchCurrentBudget = async (
       if (!Number.isInteger(n) || n < 0) {
         throw new BadRequestError("initial_budget는 0 이상의 정수여야 합니다.");
       }
-      updatedInitial = await prisma.initialBudget.update({
-        where: { id: updatedInitial.id },
-        data: { amount: n },
-      });
+      updatedInitial = await updateInitialBudget(n);
     }
 
-    if (Object.keys(monthlyUpdate).length === 0 && initial_budget === undefined) {
-      throw new BadRequestError("수정할 값(budget_amount, spent_amount, initial_budget 중 하나)을 보내주세요.");
+    if (
+      Object.keys(monthlyUpdate).length === 0 &&
+      initial_budget === undefined
+    ) {
+      throw new BadRequestError(
+        "수정할 값(budget_amount, spent_amount, initial_budget 중 하나)을 보내주세요.",
+      );
     }
 
     res.status(200).json({
@@ -111,7 +117,10 @@ export const patchCurrentBudget = async (
         month: updatedBudget.month,
         budget_amount: updatedBudget.budget_amount,
         spent_amount: updatedBudget.spent_amount,
-        remaining: Math.max(0, updatedBudget.budget_amount - updatedBudget.spent_amount),
+        remaining: Math.max(
+          0,
+          updatedBudget.budget_amount - updatedBudget.spent_amount,
+        ),
         created_at: updatedBudget.created_at,
         updated_at: updatedBudget.updated_at,
       },
