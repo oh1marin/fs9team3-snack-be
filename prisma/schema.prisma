@@ -8,17 +8,32 @@ datasource db {
 }
 
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  password     String
-  is_admin     String   @default("N")
-  create_at    DateTime @default(now())
-  updated_at   DateTime @updatedAt
-  items        Item[]
-  carts        Cart[]
-  orders       Order[]
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String
+  is_admin       String   @default("N")
+  is_super_admin String   @default("N")
+  create_at      DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  items          Item[]
+  carts          Cart[]
+  orders         Order[]
+  invitations    Invitation[]
 
   @@map("users")
+}
+
+model Invitation {
+  id         String    @id @default(uuid())
+  email      String
+  token      String    @unique
+  expires_at DateTime
+  used_at    DateTime?
+  created_by String
+  created_at DateTime  @default(now())
+  creator    User      @relation(fields: [created_by], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
 }
 
 model Item {
@@ -90,4 +105,18 @@ model OrderItem {
   item  Item  @relation(fields: [item_id], references: [id], onDelete: Cascade)
 
   @@map("order_items")
+}
+
+// 월별 예산 (매달 1일 cron으로 해당 월 레코드 생성)
+model MonthlyBudget {
+  id           String   @id @default(uuid())
+  year         Int
+  month        Int      // 1~12
+  budget_amount Int      @default(0) // 이번 달 예산 (매달 시작 예산)
+  spent_amount  Int      @default(0) // 이번 달 사용액
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  @@unique([year, month])
+  @@map("monthly_budgets")
 }
