@@ -25,19 +25,20 @@ function cookieOptions(maxAgeMs: number) {
   };
 }
 
-// 회원가입
+// 회원가입 (선택: invitationToken 있으면 초대 링크로 가입, 이메일은 초대 이메일과 일치해야 함)
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, invitationToken } = req.body;
 
     // 필수 필드 검사
     if (!email || !password) {
       throw new BadRequestError("이메일과 비밀번호를 입력해주세요.");
     }
 
+    const emailTrimmed = String(email).trim();
     // 이메일 형식 검사
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(emailTrimmed)) {
       throw new BadRequestError("올바른 이메일 형식이 아닙니다.");
     }
 
@@ -46,9 +47,33 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
       throw new BadRequestError("비밀번호는 최소 8자 이상이어야 합니다.");
     }
 
+    let invitationId: string | null = null;
+    if (invitationToken && typeof invitationToken === "string") {
+      try {
+        const invitation = await prisma.invitation.findFirst({
+          where: {
+            token: invitationToken.trim(),
+            used_at: null,
+            expires_at: { gt: new Date() },
+          },
+        });
+        if (!invitation) {
+          throw new BadRequestError("유효하지 않거나 만료된 초대 링크입니다.");
+        }
+        if (invitation.email.toLowerCase() !== emailTrimmed.toLowerCase()) {
+          throw new BadRequestError("초대된 이메일과 일치해야 합니다.");
+        }
+        invitationId = invitation.id;
+      } catch (e) {
+        if (e instanceof BadRequestError) throw e;
+        console.error("[signup] invitation 조회/검증 실패:", e);
+        throw new BadRequestError("유효하지 않거나 만료된 초대 링크입니다.");
+      }
+    }
+
     // 이메일 중복 확인
     const existingUser = await prisma.user.findUnique({
-      where: { email },
+      where: { email: emailTrimmed },
     });
 
     if (existingUser) {
@@ -59,10 +84,22 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
       data: {
-        email,
+        email: emailTrimmed,
         password: hashedPassword,
       },
     });
+
+    // 초대 링크로 가입한 경우 사용 처리
+    if (invitationId) {
+      try {
+        await prisma.invitation.update({
+          where: { id: invitationId },
+          data: { used_at: new Date() },
+        });
+      } catch (e) {
+        console.error("[signup] invitation 사용 처리 실패:", e);
+      }
+    }
 
     // JWT 토큰 생성
     const accessToken = jwt.sign(
@@ -89,6 +126,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
         email: user.email,
         nickname: user.email.split("@")[0],
         is_admin: (user as { is_admin?: string }).is_admin ?? "N",
+        is_super_admin: (user as { is_super_admin?: string }).is_super_admin ?? "N",
       },
       accessToken,
       refreshToken,
@@ -150,6 +188,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         email: user.email,
         nickname: user.email.split("@")[0],
         is_admin: (user as { is_admin?: string }).is_admin ?? "N",
+        is_super_admin: (user as { is_super_admin?: string }).is_super_admin ?? "N",
       },
       accessToken,
       refreshToken,
@@ -180,12 +219,13 @@ export const getCurrentUser = async (req: Request, res: Response, next: NextFunc
       throw new NotFoundError("사용자를 찾을 수 없습니다.");
     }
 
-    const u = user as typeof user & { is_admin?: string };
+    const u = user as typeof user & { is_admin?: string; is_super_admin?: string };
     res.status(200).json({
       id: u.id,
       email: u.email,
       nickname: u.email.split("@")[0],
       is_admin: u.is_admin ?? "N",
+      is_super_admin: u.is_super_admin ?? "N",
     });
   } catch (error) {
     next(error);
