@@ -1,4 +1,9 @@
 node_modules
+.cursorrules
+
+# 한글 커밋 메시지용 임시 파일
+.commit-msg-tmp
+msg.txt
 # Keep environment variables out of version control
 .env
 .env.ec2

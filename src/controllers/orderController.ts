@@ -1,6 +1,7 @@
 import { Response } from "express";
 import { PrismaClient, OrderStatus } from "@prisma/client";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { addSpentToBudget } from "../cron/budgetCron";
 
 const prisma = new PrismaClient();
 
@@ -401,6 +402,10 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       await tx.cart.deleteMany({
         where: { user_id: userId, item_id: { in: itemIds } },
       });
+      // 즉시 구매(관리자): 예산 사용액 차감 (상품금액 + 배송비)
+      if (isInstant) {
+        await addSpentToBudget(total_amount, tx);
+      }
       return created;
     });
 
@@ -465,6 +470,10 @@ export const patchOrderStatusAdmin = async (
       });
       if (status === "cancelled") {
         await restoreOrderItemsToCart(tx, order.user_id, o.order_items);
+      }
+      // 승인 시 예산 사용액 차감 (상품금액 + 배송비)
+      if (status === "approved") {
+        await addSpentToBudget(order.total_amount, tx);
       }
       return o;
     });

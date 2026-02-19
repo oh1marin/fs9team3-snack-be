@@ -1,6 +1,8 @@
 import { Response } from "express";
 import { PrismaClient } from "@prisma/client";
 import { AuthRequest } from "../middleware/authMiddleware";
+import { ensureMonthlyBudget, getCurrentYearMonth, getShippingFee, getOrCreateInitialBudget } from "../cron/budgetCron";
+import prismaDefault from "../utils/prisma";
 
 const prisma = new PrismaClient();
 
@@ -11,19 +13,49 @@ function withCartImage<T extends { item?: { image?: string | null; price?: numbe
   return { ...row, image: img, image_url: img, price: unitPrice, unit_price: unitPrice };
 }
 
-/* GET /api/cart - 현재 사용자 장바구니 목록 */
+/* GET /api/cart - 현재 사용자 장바구니 목록. 관리자/최고관리자는 예산 정보 포함 */
 export const getCarts = async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.user?.id;
 
-    const carts = await prisma.cart.findMany({
-      where: { user_id: userId },
-      include: { item: true },
-      orderBy: { created_at: "desc" },
-    });
+    const [carts, user] = await Promise.all([
+      prisma.cart.findMany({
+        where: { user_id: userId },
+        include: { item: true },
+        orderBy: { created_at: "desc" },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { is_admin: true, is_super_admin: true },
+      }),
+    ]);
 
     const items = carts.map(withCartImage);
-    res.json({ data: items, items });
+    const total_amount = items.reduce((sum, it) => sum + ((it as { total_price?: number }).total_price ?? 0), 0);
+    const shipping_fee = getShippingFee();
+
+    let budget: { budget_amount: number; spent_amount: number; remaining: number; initial_budget: number } | null = null;
+    if (user?.is_admin === "Y" || user?.is_super_admin === "Y") {
+      const { year, month } = getCurrentYearMonth();
+      const [b, initial] = await Promise.all([
+        ensureMonthlyBudget(year, month, prismaDefault),
+        getOrCreateInitialBudget(prismaDefault),
+      ]);
+      budget = {
+        budget_amount: b.budget_amount,
+        spent_amount: b.spent_amount,
+        remaining: Math.max(0, b.budget_amount - b.spent_amount),
+        initial_budget: initial.amount,
+      };
+    }
+
+    res.json({
+      data: items,
+      items,
+      total_amount,
+      shipping_fee,
+      ...(budget && { budget }),
+    });
   } catch (error) {
     console.error("장바구니 조회 오류:", error);
     res.status(500).json({ message: "장바구니 조회에 실패했습니다." });
@@ -66,17 +98,41 @@ export const createCart = async (req: AuthRequest, res: Response) => {
     });
 
     // FE CartContext가 res.items로 전체 개수 동기화하므로, 추가 후 전체 장바구니 반환
-    const carts = await prisma.cart.findMany({
-      where: { user_id: userId },
-      include: { item: true },
-      orderBy: { created_at: "desc" },
-    });
+    const [carts, user] = await Promise.all([
+      prisma.cart.findMany({
+        where: { user_id: userId },
+        include: { item: true },
+        orderBy: { created_at: "desc" },
+      }),
+      prisma.user.findUnique({
+        where: { id: userId },
+        select: { is_admin: true, is_super_admin: true },
+      }),
+    ]);
     const items = carts.map(withCartImage);
+    const total_amount = items.reduce((sum, it) => sum + ((it as { total_price?: number }).total_price ?? 0), 0);
+    let budget: { budget_amount: number; spent_amount: number; remaining: number; initial_budget: number } | null = null;
+    if (user?.is_admin === "Y" || user?.is_super_admin === "Y") {
+      const { year, month } = getCurrentYearMonth();
+      const [b, initial] = await Promise.all([
+        ensureMonthlyBudget(year, month, prismaDefault),
+        getOrCreateInitialBudget(prismaDefault),
+      ]);
+      budget = {
+        budget_amount: b.budget_amount,
+        spent_amount: b.spent_amount,
+        remaining: Math.max(0, b.budget_amount - b.spent_amount),
+        initial_budget: initial.amount,
+      };
+    }
 
     res.status(201).json({
       message: "장바구니에 담았습니다.",
       items,
       data: items,
+      total_amount,
+      shipping_fee: getShippingFee(),
+      ...(budget && { budget }),
     });
   } catch (error) {
     console.error("장바구니 담기 오류:", error);
