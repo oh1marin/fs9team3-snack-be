@@ -1,7 +1,7 @@
 import { Response } from "express";
 import { PrismaClient, OrderStatus } from "@prisma/client";
 import { AuthRequest } from "../middleware/authMiddleware";
-import { addSpentToBudget } from "../cron/budgetCron";
+import { addSpentToBudget, canAffordOrder, getShippingFee } from "../cron/budgetCron";
 
 const prisma = new PrismaClient();
 
@@ -383,6 +383,18 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     const now = new Date();
     const isInstant = instantPurchase;
 
+    // 즉시 구매: 남은 예산 체크
+    if (isInstant) {
+      const { ok, remaining, required } = await canAffordOrder(total_amount);
+      if (!ok) {
+        return res.status(400).json({
+          message: "예산이 부족합니다.",
+          remaining,
+          required,
+        });
+      }
+    }
+
     // 주문 생성 + 요청한 품목 장바구니 삭제를 한 트랜잭션으로 처리 (하나라도 실패하면 둘 다 롤백)
     const order = await prisma.$transaction(async (tx) => {
       const created = await tx.order.create({
@@ -448,6 +460,18 @@ export const patchOrderStatusAdmin = async (
       return res.status(400).json({
         message: "승인 대기 중인 주문만 승인/반려할 수 있습니다.",
       });
+    }
+
+    // 승인 시 남은 예산 체크
+    if (status === "approved") {
+      const { ok, remaining, required } = await canAffordOrder(order.total_amount);
+      if (!ok) {
+        return res.status(400).json({
+          message: "예산이 부족하여 승인할 수 없습니다.",
+          remaining,
+          required,
+        });
+      }
     }
 
     // 승인/반려를 주문 테이블 컬럼(approved_at, canceled_at)에 직접 반영.
@@ -528,6 +552,7 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
       prisma.order.count({ where: historyWhere }),
     ]);
 
+    const shippingFee = getShippingFee();
     const data = list.map((order) => {
       const withCat = order.order_items.map((oi) => ({
         ...oi,
@@ -536,10 +561,14 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
       const { summary_title, total_quantity } = getOrderSummary(
         order.order_items,
       );
+      // 예산 차감액 = 상품금액 + 배송비 (spent_amount와 일치)
+      const amount_with_shipping = order.total_amount + shippingFee;
       return {
         id: order.id,
         order_id: order.id,
         total_amount: order.total_amount,
+        shipping_fee: shippingFee,
+        amount_with_shipping,
         approved_at: order.approved_at,
         created_at: order.created_at,
         summary_title,
@@ -552,8 +581,19 @@ export const getPurchaseHistory = async (req: AuthRequest, res: Response) => {
       };
     });
 
+    // 현재 페이지 기준 합계 (전체 합계 아님)
+    const total_product_amount = data.reduce((s, o) => s + o.total_amount, 0);
+    const total_shipping = data.length * shippingFee;
+    const total_deducted = total_product_amount + total_shipping;
+
     res.json({
       data,
+      summary: {
+        total_product_amount,
+        total_shipping,
+        total_deducted,
+        order_count: data.length,
+      },
       pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
     });
   } catch (error) {

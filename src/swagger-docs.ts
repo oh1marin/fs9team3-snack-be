@@ -88,11 +88,18 @@
  * /api/auth/refresh:
  *   post:
  *     tags: [Auth]
- *     summary: 토큰 갱신 (refreshToken 쿠키 사용)
- *     description: refreshToken 쿠키로 accessToken 재발급. FE에서 401 전에 호출해 세션 연장 가능.
+ *     summary: 토큰 갱신 (refreshToken으로 액세스+리프레시 재발급)
+ *     description: refreshToken(쿠키 또는 body)으로 accessToken·refreshToken 둘 다 새로 발급(회전). 액세스 10분, 리프레시 24시간.
+ *     requestBody:
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               refreshToken: { type: string, description: "쿠키 대신 body로 전달 가능" }
  *     responses:
  *       200:
- *         description: accessToken 갱신, 쿠키 재설정
+ *         description: accessToken, refreshToken 갱신, 쿠키 재설정, JSON으로 둘 다 반환
  *       401:
  *         description: refreshToken 만료 또는 없음
  */

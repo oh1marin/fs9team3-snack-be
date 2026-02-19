@@ -4,6 +4,16 @@ import prisma from "../utils/prisma";
 
 const SHIPPING_FEE = Number(process.env.SHIPPING_FEE) || 3000;
 
+// PrismaClient 확장 (InitialBudget 모델 - generate 후 타입 자동 인식)
+type InitialBudgetRow = { id: string; amount: number; updated_at: Date };
+type DbClient = PrismaClient & {
+  initialBudget: {
+    findFirst: (args?: object) => Promise<InitialBudgetRow | null>;
+    create: (args: { data: { amount: number } }) => Promise<InitialBudgetRow>;
+    update: (args: { where: { id: string }; data: { amount: number } }) => Promise<InitialBudgetRow>;
+  };
+};
+
 /** 이번 달 year, month 반환 (month 1~12) */
 export function getCurrentYearMonth() {
   const now = new Date();
@@ -17,7 +27,7 @@ export function getShippingFee() {
 
 /** 시작 예산(initial_budget) 싱글톤 조회. 없으면 기본 300만원으로 생성 */
 export async function getOrCreateInitialBudget(client?: PrismaClient) {
-  const db = client ?? prisma;
+  const db = (client ?? prisma) as DbClient;
   let row = await db.initialBudget.findFirst();
   if (!row) {
     row = await db.initialBudget.create({
@@ -25,6 +35,19 @@ export async function getOrCreateInitialBudget(client?: PrismaClient) {
     });
   }
   return row;
+}
+
+/** 시작 예산 금액 수정 */
+export async function updateInitialBudget(
+  amount: number,
+  client?: PrismaClient
+) {
+  const db = (client ?? prisma) as DbClient;
+  const row = await getOrCreateInitialBudget(db);
+  return db.initialBudget.update({
+    where: { id: row.id },
+    data: { amount },
+  });
 }
 
 /** 해당 연·월 예산 레코드 없으면 생성 (새 월은 initial_budget.amount로 budget_amount 시작) */
@@ -40,6 +63,19 @@ export async function ensureMonthlyBudget(
     create: { year, month, budget_amount: initial.amount, spent_amount: 0 },
     update: {},
   });
+}
+
+/** 결제 금액(orderTotal + 배송비)으로 주문 가능 여부 확인. true면 예산 충분 */
+export async function canAffordOrder(
+  orderTotal: number,
+  db?: PrismaClient
+): Promise<{ ok: boolean; remaining: number; required: number }> {
+  const client = db ?? prisma;
+  const { year, month } = getCurrentYearMonth();
+  const budget = await ensureMonthlyBudget(year, month, client);
+  const required = orderTotal + SHIPPING_FEE;
+  const remaining = Math.max(0, budget.budget_amount - budget.spent_amount);
+  return { ok: remaining >= required, remaining, required };
 }
 
 /** 주문 승인 시 예산 사용액 증가 (상품금액 + 배송비). tx 있으면 트랜잭션 내에서 실행 */
