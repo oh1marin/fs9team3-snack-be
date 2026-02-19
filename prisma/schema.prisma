@@ -107,16 +107,27 @@ model OrderItem {
   @@map("order_items")
 }
 
-// 월별 예산 (매달 1일 cron으로 해당 월 레코드 생성)
+// 시작 예산 (매달 기본값. 새 월 생성 시 이 값으로 budget_amount 세팅)
+model InitialBudget {
+  id         String   @id @default(uuid())
+  amount     Int      @default(0) // 매달 기본 시작 예산 (원)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("initial_budgets")
+}
+
+// 월별 예산 (매달 1일 cron으로 해당 월 레코드 생성. budget_amount = 당월 설정 또는 initial_budget)
 model MonthlyBudget {
-  id           String   @id @default(uuid())
-  year         Int
-  month        Int      // 1~12
-  budget_amount Int      @default(0) // 이번 달 예산 (매달 시작 예산)
+  id            String   @id @default(uuid())
+  year          Int
+  month         Int      // 1~12
+  budget_amount Int      @default(0) // 이번 달 예산 (월 예산. 새 월은 initial_budget으로 시작)
   spent_amount  Int      @default(0) // 이번 달 사용액
-  created_at   DateTime @default(now())
-  updated_at   DateTime @updatedAt
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
 
   @@unique([year, month])
   @@map("monthly_budgets")
 }
+

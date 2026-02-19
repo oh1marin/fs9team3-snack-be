@@ -25,10 +25,11 @@ function cookieOptions(maxAgeMs: number) {
   };
 }
 
-// 회원가입 (선택: invitationToken 있으면 초대 링크로 가입, 이메일은 초대 이메일과 일치해야 함)
+// 회원가입 (선택: invitationToken/token 있으면 초대 링크로 가입, 이메일은 초대 이메일과 일치해야 함)
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, invitationToken } = req.body;
+    const { email, password, invitationToken, token } = req.body;
+    const invToken = invitationToken ?? token; // FE가 쿼리 param token을 body에 token으로 보낼 수 있음
 
     // 필수 필드 검사
     if (!email || !password) {
@@ -48,11 +49,11 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     }
 
     let invitationId: string | null = null;
-    if (invitationToken && typeof invitationToken === "string") {
+    if (invToken && typeof invToken === "string") {
       try {
         const invitation = await prisma.invitation.findFirst({
           where: {
-            token: invitationToken.trim(),
+            token: invToken.trim(),
             used_at: null,
             expires_at: { gt: new Date() },
           },
@@ -67,7 +68,9 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
       } catch (e) {
         if (e instanceof BadRequestError) throw e;
         console.error("[signup] invitation 조회/검증 실패:", e);
-        throw new BadRequestError("유효하지 않거나 만료된 초대 링크입니다.");
+        // DB 테이블 없음 등: "relation \"invitations\" does not exist"
+        const msg = e instanceof Error && e.message?.includes("invitations") ? "초대 기능을 사용하려면 DB 마이그레이션이 필요합니다. (npx prisma db push)" : "유효하지 않거나 만료된 초대 링크입니다.";
+        throw new BadRequestError(msg);
       }
     }
 
@@ -132,6 +135,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
       refreshToken,
     });
   } catch (error) {
+    console.error("[signup] 500 원인:", error);
     next(error);
   }
 };
