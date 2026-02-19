@@ -12,8 +12,10 @@ import userRoutes from "./routes/userRoutes";
 import cartRoutes from "./routes/cartRoutes";
 import orderRoutes from "./routes/orderRoutes";
 import adminRoutes from "./routes/adminRoutes";
+import superAdminRoutes from "./routes/superAdminRoutes";
 import { errorHandler } from "./middleware/errorHandler";
 import swaggerSpec from "./config/swagger";
+import { startBudgetCron, ensureMonthlyBudget } from "./cron/budgetCron";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -71,6 +73,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/super-admin", superAdminRoutes);
 
 // Health check
 app.get("/", (req, res) => {
@@ -99,7 +102,15 @@ app.use((req, res) => {
 // 에러 핸들러 (반드시 모든 라우트 뒤에 위치)
 app.use(errorHandler);
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(`API docs: http://localhost:${PORT}/api-docs`);
+  // 이번 달 예산 레코드 없으면 생성
+  try {
+    const now = new Date();
+    await ensureMonthlyBudget(now.getFullYear(), now.getMonth() + 1);
+  } catch (e) {
+    console.error("[startup] 이번 달 예산 레코드 생성 실패:", e);
+  }
+  startBudgetCron();
 });
