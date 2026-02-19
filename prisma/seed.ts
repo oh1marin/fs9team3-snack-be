@@ -4,13 +4,14 @@ import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
-/** User create payload (is_admin 포함, 로컬 Prisma 타입 미반영 시 대비) */
-type UserSeedData = Prisma.UserCreateInput & { is_admin?: 'Y' | 'N' };
+/** User create payload (is_admin, is_super_admin 포함) */
+type UserSeedData = Prisma.UserCreateInput & { is_admin?: 'Y' | 'N'; is_super_admin?: 'Y' | 'N' };
 
 async function main() {
   console.log(' 시드 데이터 생성 시작...');
 
-  // 기존 데이터 삭제
+  // 기존 데이터 삭제 (invitation은 user에 cascade)
+  await prisma.invitation.deleteMany();
   await prisma.item.deleteMany();
   await prisma.user.deleteMany();
   console.log('기존 데이터 삭제 완료');
@@ -25,6 +26,7 @@ async function main() {
         email: 'marin@marin.com',
         password: marinPassword,
         is_admin: 'Y',
+        is_super_admin: 'Y',
       } as UserSeedData,
     }),
     prisma.user.create({
