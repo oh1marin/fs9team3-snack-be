@@ -167,8 +167,6 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, password } = req.body;
-    console.log("email",email)
-
     // 필수 필드 검사
     if (!email || !password) {
       throw new BadRequestError("이메일과 비밀번호를 입력해주세요.");

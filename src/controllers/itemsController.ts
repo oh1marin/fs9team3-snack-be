@@ -20,7 +20,7 @@ export const getItems = async (req: AuthRequest, res: Response) => {
     const where: any = {};
 
     // mine=1: 현재 로그인한 사용자가 등록한 상품만 조회
-    const mineOnly = mine === "1" || mine === 1;
+    const mineOnly = String(mine ?? "") === "1";
     if (mineOnly) {
       if (!req.user?.id) {
         return res.status(401).json({ message: "로그인이 필요합니다." });
@@ -48,8 +48,6 @@ export const getItems = async (req: AuthRequest, res: Response) => {
     const limitNum = Math.max(1, Math.min(100, parseInt(limit as string) || 8));
     const skip = (pageNum - 1) * limitNum;
 
-    console.log("🔍 상품 목록 조회:", { where, orderBy, page: pageNum, limit: limitNum });
-
     // 전체 개수 조회
     const totalCount = await prisma.item.count({ where });
 
@@ -60,8 +58,6 @@ export const getItems = async (req: AuthRequest, res: Response) => {
       skip,
       take: limitNum,
     });
-
-    console.log("📊 조회 결과:", { totalCount, returnedCount: items.length, items: items.map(i => ({ id: i.id, title: i.title, category_main: i.category_main, category_sub: i.category_sub })) });
 
     const totalPages = Math.ceil(totalCount / limitNum);
     const hasNextPage = pageNum < totalPages;
@@ -164,8 +160,6 @@ export const createItem = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
     const imageUrl = getImageUrl(req.file as FileWithLocation, image);
 
-    console.log("📦 상품 등록 요청:", { title, price, image, category_main, category_sub, userId });
-
     if (!userId) {
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
@@ -206,8 +200,6 @@ export const createItem = async (req: AuthRequest, res: Response) => {
       },
     });
 
-    console.log("✅ 상품 등록 성공:", { id: item.id, title: item.title, category_main: item.category_main, category_sub: item.category_sub });
-
     res.status(201).json({
       message: "상품이 등록되었습니다.",
       item: {
@@ -242,8 +234,6 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
     const { id: itemIdParam } = req.params;
     const itemId = parseItemId(itemIdParam);
 
-    console.log("✏️ 상품 수정 요청:", { itemId, userId: req.user?.id, body: req.body });
-
     if (!itemId) {
       return res.status(400).json({ message: "유효하지 않은 상품 id입니다." });
     }
@@ -252,7 +242,6 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.id;
 
     if (!userId) {
-      console.log("❌ 수정 실패: 로그인 필요");
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
@@ -261,14 +250,10 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
     });
 
     if (!existingItem) {
-      console.log("❌ 수정 실패: 상품을 찾을 수 없음");
       return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
     }
 
-    console.log("📋 기존 상품 정보:", { itemId: existingItem.id, ownerId: existingItem.user_id, requestUserId: userId });
-
     if (existingItem.user_id !== userId) {
-      console.log("❌ 수정 실패: 권한 없음");
       return res.status(403).json({ message: "수정 권한이 없습니다." });
     }
 
@@ -305,8 +290,6 @@ export const updateItem = async (req: AuthRequest, res: Response) => {
         },
       },
     });
-
-    console.log("✅ 상품 수정 성공:", { itemId, title: item.title });
 
     res.json({
       message: "상품이 수정되었습니다.",
@@ -372,15 +355,12 @@ export const deleteItem = async (req: AuthRequest, res: Response) => {
     const { id: itemIdParam } = req.params;
     const itemId = parseItemId(itemIdParam);
 
-    console.log("🗑️ 상품 삭제 요청:", { itemId, userId: req.user?.id });
-
     if (!itemId) {
       return res.status(400).json({ message: "유효하지 않은 상품 id입니다." });
     }
 
     const userId = req.user?.id;
     if (!userId) {
-      console.log("❌ 삭제 실패: 로그인 필요");
       return res.status(401).json({ message: "로그인이 필요합니다." });
     }
 
@@ -389,22 +369,16 @@ export const deleteItem = async (req: AuthRequest, res: Response) => {
     });
 
     if (!existingItem) {
-      console.log("❌ 삭제 실패: 상품을 찾을 수 없음");
       return res.status(404).json({ message: "상품을 찾을 수 없습니다." });
     }
 
-    console.log("📋 기존 상품 정보:", { itemId: existingItem.id, ownerId: existingItem.user_id, requestUserId: userId });
-
     if (existingItem.user_id !== userId) {
-      console.log("❌ 삭제 실패: 권한 없음");
       return res.status(403).json({ message: "삭제 권한이 없습니다." });
     }
 
     await prisma.item.delete({
       where: { id: itemId },
     });
-
-    console.log("✅ 상품 삭제 성공:", { itemId, title: existingItem.title });
 
     res.json({
       success: true,

@@ -32,10 +32,6 @@ export async function sendInvitationEmail(toEmail: string, token: string): Promi
   const signupLink = `${FRONTEND_SIGNUP_URL.replace(/\/$/, "")}?token=${encodeURIComponent(token)}`;
   const transport = getTransport();
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[이메일] 발송 시도 ->", toEmail, "| SMTP:", SMTP_HOST, "| from:", INVITATION_FROM);
-  }
-
   const info = await transport.sendMail({
     from: INVITATION_FROM,
     to: toEmail,
@@ -50,7 +46,5 @@ export async function sendInvitationEmail(toEmail: string, token: string): Promi
     `,
   });
 
-  if (process.env.NODE_ENV !== "production") {
-    console.log("[이메일] 발송 완료 messageId:", info.messageId);
-  }
+  void info;
 }
