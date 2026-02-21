@@ -102,10 +102,10 @@ export function startBudgetCron() {
     try {
       const { year, month } = getCurrentYearMonth();
       await ensureMonthlyBudget(year, month);
-      console.log(`[cron] ${year}년 ${month}월 예산 레코드 확인/생성 완료`);
+      // cron: 월별 예산 레코드 생성 완료
     } catch (e) {
       console.error("[cron] 월별 예산 생성 실패:", e);
     }
   });
-  console.log("[cron] 매월 1일 00:00 예산 초기화 스케줄 등록됨");
+  // cron: 매월 1일 00:00 예산 초기화 스케줄 등록
 }

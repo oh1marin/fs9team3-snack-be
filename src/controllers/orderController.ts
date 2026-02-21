@@ -334,7 +334,6 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
     const bodyItems = req.body?.items as
       | Array<{ item_id: string; quantity?: number }>
       | undefined;
-    console.log("bodyItems", bodyItems);
     let items: { item_id: string; quantity: number }[];
 
     if (Array.isArray(bodyItems) && bodyItems.length > 0) {

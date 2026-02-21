@@ -14,14 +14,7 @@ const router = Router();
 router.post("/signup", signup);
 
 // 로그인
-router.post(
-  "/login",
-  (req, res, next) => {
-    console.log("실행성공");
-    next();
-  },
-  login,
-);
+router.post("/login", login);
 
 // 현재 유저 정보 (쿠키 기반 인증)
 router.get("/me", getCurrentUser);

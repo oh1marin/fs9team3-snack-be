@@ -19,6 +19,8 @@ import { startBudgetCron, ensureMonthlyBudget } from "./cron/budgetCron";
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+// Cloudflare/ALB 등 프록시 환경에서 HTTPS 인식
+app.set("trust proxy", 1);
 
 // CORS: 로컬 + 배포 프론트. CORS_ORIGIN에 호스트만 있어도 같은 호스트 다른 포트 허용
 const corsOriginList = process.env.CORS_ORIGIN
@@ -77,7 +79,6 @@ app.use("/api/super-admin", superAdminRoutes);
 
 // Health check
 app.get("/", (req, res) => {
-  console.log("health check");
   res.json({
     message: "Snack Backend API",
     status: "running",
@@ -103,8 +104,6 @@ app.use((req, res) => {
 app.use(errorHandler);
 
 app.listen(PORT, async () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-  console.log(`API docs: http://localhost:${PORT}/api-docs`);
   // 이번 달 예산 레코드 없으면 생성
   try {
     const now = new Date();
