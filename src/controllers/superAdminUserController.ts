@@ -51,13 +51,20 @@ function toYN(value: unknown): "Y" | "N" | null {
  * 최고관리자: 특정 유저 등급(is_admin, is_super_admin) 수정
  * body: { is_admin?: "Y"|"N"|boolean, is_super_admin?: "Y"|"N"|boolean } (둘 다 선택)
  */
+function parseUserId(param: unknown): string | null {
+  if (typeof param === "string" && param.trim()) return param.trim();
+  if (Array.isArray(param) && param[0] && typeof param[0] === "string")
+    return param[0].trim();
+  return null;
+}
+
 export const patchUserGrade = async (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = parseUserId(req.params.id);
     const body = req.body as Record<string, unknown>;
     const isAdminRaw = body.is_admin ?? body.isAdmin;
     const isSuperAdminRaw = body.is_super_admin ?? body.isSuperAdmin;
@@ -121,7 +128,7 @@ export const deleteUser = async (
   next: NextFunction
 ) => {
   try {
-    const { id } = req.params;
+    const id = parseUserId(req.params.id);
     const authReq = req as AuthRequest;
     const currentUserId = authReq.user?.id;
 
