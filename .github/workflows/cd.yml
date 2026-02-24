@@ -14,6 +14,13 @@ jobs:
     # CI 실패 시 배포 스킵
     if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
+      - name: Check secrets
+        run: |
+          if [ -z "${{ secrets.SSH_HOST }}" ]; then echo "::error::SSH_HOST이 설정되지 않았습니다. Settings → Secrets → Actions에서 추가하세요."; exit 1; fi
+          if [ -z "${{ secrets.SSH_USER }}" ]; then echo "::error::SSH_USER이 설정되지 않았습니다."; exit 1; fi
+          if [ -z "${{ secrets.SSH_PRIVATE_KEY }}" ]; then echo "::error::SSH_PRIVATE_KEY가 설정되지 않았습니다."; exit 1; fi
+          if [ -z "${{ secrets.DEPLOY_PATH }}" ]; then echo "::error::DEPLOY_PATH가 설정되지 않았습니다."; exit 1; fi
+          echo "Secrets 확인 완료"
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
