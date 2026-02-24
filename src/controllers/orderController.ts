@@ -100,6 +100,19 @@ async function restoreOrderItemsToCart(
   }
 }
 
+/** 주문 승인 시 해당 주문 품목의 items.count(구매 횟수) 증가 (트랜잭션 내부에서 호출) */
+async function incrementItemPurchaseCount(
+  tx: { item: typeof prisma.item },
+  orderItems: Array<{ item_id: string; quantity: number }>,
+) {
+  for (const oi of orderItems) {
+    await tx.item.update({
+      where: { id: oi.item_id },
+      data: { count: { increment: oi.quantity } },
+    });
+  }
+}
+
 /** GET /api/orders - 구매 요청 목록 (page, limit, sort=request_date:desc 등) */
 export const getOrders = async (req: AuthRequest, res: Response) => {
   try {
@@ -284,7 +297,7 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ message: "주문 ID가 필요합니다." });
     }
 
-    console.log("userId--------", userId);
+    console.log("userId--------", userId); 
     const orderRaw = await prisma.order.findFirst({
       where: { id },
       include: { order_items: { include: { item: true } } },
@@ -419,9 +432,10 @@ export const createOrder = async (req: AuthRequest, res: Response) => {
       await tx.cart.deleteMany({
         where: { user_id: userId, item_id: { in: itemIds } },
       });
-      // 즉시 구매(관리자): 예산 사용액 차감 (상품금액 + 배송비)
+      // 즉시 구매(관리자): 예산 사용액 차감 (상품금액 + 배송비) + 상품별 구매 횟수 증가
       if (isInstant) {
         await addSpentToBudget(total_amount, tx);
+        await incrementItemPurchaseCount(tx, orderItemsData);
       }
       return created;
     });
@@ -502,9 +516,13 @@ export const patchOrderStatusAdmin = async (
       if (status === "cancelled") {
         await restoreOrderItemsToCart(tx, order.user_id, o.order_items);
       }
-      // 승인 시 예산 사용액 차감 (상품금액 + 배송비)
+      // 승인 시 예산 사용액 차감 (상품금액 + 배송비) + 상품별 구매 횟수 증가
       if (status === "approved") {
         await addSpentToBudget(order.total_amount, tx);
+        await incrementItemPurchaseCount(
+          tx,
+          o.order_items.map((oi) => ({ item_id: oi.item_id, quantity: oi.quantity })),
+        );
       }
       return o;
     });
