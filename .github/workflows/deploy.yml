@@ -38,40 +38,21 @@ jobs:
       - name: 빌드파일 압축하기
         run: tar -czvf project.tar.gz dist .env package.json package-lock.json prisma
 
-      - name: Secrets 검증
-        run: |
-          if [ -z "$SSH_HOST" ]; then echo "::error::SSH_HOST 또는 EC2_HOST Secret을 추가하세요. (예: 13.209.35.172)"; exit 1; fi
-          if [ -z "$SSH_USER" ]; then echo "::error::SSH_USER 또는 EC2_USERNAME Secret을 추가하세요. (예: ec2-user)"; exit 1; fi
-          if [ -z "$DEPLOY_PATH" ]; then echo "::error::DEPLOY_PATH Secret을 추가하세요. (예: /home/ec2-user/fs9team3-snack-be)"; exit 1; fi
-          echo "Secrets 확인 완료"
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST || secrets.EC2_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER || secrets.EC2_USERNAME }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
-
-      - name: SSH 키 파일 생성
-        env:
-          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY || secrets.EC2_PRIVATE_KEY }}
-        run: |
-          echo "$SSH_KEY" > deploy_key.pem
-          chmod 600 deploy_key.pem
-          if [ ! -s deploy_key.pem ]; then echo "::error::SSH_PRIVATE_KEY 또는 EC2_PRIVATE_KEY가 필요합니다."; exit 1; fi
-
       - name: scp 사용하여 EC2에 빌드파일 전송하기
         uses: appleboy/scp-action@v1
         with:
-          host: ${{ secrets.SSH_HOST || secrets.EC2_HOST }}
-          username: ${{ secrets.SSH_USER || secrets.EC2_USERNAME }}
-          key_path: ${{ github.workspace }}/deploy_key.pem
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: project.tar.gz
           target: ${{ secrets.DEPLOY_PATH }}
 
       - name: SSH로 EC2에 접속하기
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.SSH_HOST || secrets.EC2_HOST }}
-          username: ${{ secrets.SSH_USER || secrets.EC2_USERNAME }}
-          key_path: ${{ github.workspace }}/deploy_key.pem
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script_stop: true
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
