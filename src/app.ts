@@ -105,9 +105,11 @@ app.use(errorHandler);
 
 app.listen(PORT, async () => {
   // 이번 달 예산 레코드 없으면 생성
+
   try {
     const now = new Date();
     await ensureMonthlyBudget(now.getFullYear(), now.getMonth() + 1);
+    console.log(`PORT: ${PORT}에서 서버 실행중입니다.`);
   } catch (e) {
     console.error("[startup] 이번 달 예산 레코드 생성 실패:", e);
   }

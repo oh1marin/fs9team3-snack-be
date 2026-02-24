@@ -11,7 +11,9 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed-items": "tsx prisma/seed-items.ts",
     "prisma:clear-seed": "tsx prisma/clear-seed.ts",
+    "prisma:clear-except-users": "tsx prisma/clear-except-users.ts",
     "prisma:delete-approved-orders": "tsx prisma/delete-approved-orders.ts",
     "commit:ko": "node scripts/commit-ko.js",
     "test": "echo \"Error: no test specified\" && exit 1"
