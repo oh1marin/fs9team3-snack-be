@@ -13,9 +13,9 @@
 
 | Secret | 설명 |
 |--------|------|
-| `EC2_HOST` | 배포 서버 IP (예: `13.209.35.172`) |
-| `EC2_USERNAME` | SSH 로그인 사용자 (예: `ec2-user`) |
-| `EC2_PRIVATE_KEY` | SSH 비밀키(PEM) 전체 내용 |
+| `SSH_HOST` | 배포 서버 IP (예: `13.209.35.172`) |
+| `SSH_USER` | SSH 로그인 사용자 (예: `ec2-user`) |
+| `SSH_PRIVATE_KEY` | SSH 비밀키(PEM) 전체 내용 |
 | `DEPLOY_PATH` | 서버 내 앱 디렉토리 (예: `/home/ec2-user/fs9team3-snack-be`) |
 | `ENV` | .env 파일 전체 내용 (.env.ec2 내용 복사) |
 
