@@ -1,0 +1,76 @@
+{
+  "name": "fs9team3-snack-be",
+  "version": "1.0.0",
+  "description": "Snack Backend API",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "prisma generate && tsc",
+    "start": "node dist/app.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "prisma:seed-items": "tsx prisma/seed-items.ts",
+    "prisma:clear-seed": "tsx prisma/clear-seed.ts",
+    "prisma:clear-except-users": "tsx prisma/clear-except-users.ts",
+    "prisma:delete-approved-orders": "tsx prisma/delete-approved-orders.ts",
+    "commit:ko": "node scripts/commit-ko.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/fs9team3-snack-be.git"
+  },
+  "keywords": [
+    "snack",
+    "backend",
+    "express",
+    "typescript",
+    "prisma"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/your-username/fs9team3-snack-be/issues"
+  },
+  "homepage": "https://github.com/your-username/fs9team3-snack-be#readme",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.970.0",
+    "@aws-sdk/s3-request-presigner": "^3.981.0",
+    "@prisma/client": "^5.22.0",
+    "bcryptjs": "^3.0.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.0.2",
+    "multer-s3": "^3.0.1",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^6.9.16",
+    "prisma": "^5.22.0",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.0.0",
+    "@types/multer-s3": "^3.0.3",
+    "@types/node": "^25.0.9",
+    "@types/node-cron": "^3.0.11",
+    "@types/nodemailer": "^6.4.16",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.6",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3"
+  }
+}

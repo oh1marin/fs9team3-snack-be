@@ -1,2 +1,153 @@
-# fs9team3-snack-be
-be
+# Snack Backend API
+
+Express.js + TypeScript + Prisma를 사용한 스낵 구독/구매 백엔드 API 서버입니다.
+
+## 시작하기
+
+### 1. 의존성 설치
+
+```bash
+yarn install
+```
+
+### 2. 환경 변수 설정
+
+`.env` 파일을 생성하고 다음 내용을 추가하세요:
+
+```env
+# Server Configuration
+PORT=3001
+
+# Database Configuration
+DATABASE_URL="postgresql://username:password@localhost:5432/snack_db?schema=public"
+
+# JWT Configuration
+JWT_SECRET="your-secret-key-change-this-in-production"
+JWT_REFRESH_SECRET="your-refresh-secret-key-change-this-in-production"
+
+# CORS (쉼표 구분)
+CORS_ORIGIN=http://localhost:3000,http://localhost:4000
+
+# AWS S3 (이미지 업로드)
+AWS_ACCESS_KEY_ID=""
+AWS_SECRET_ACCESS_KEY=""
+AWS_REGION=""
+AWS_PUBLIC_BUCKET_NAME=""
+AWS_PRIVATE_BUCKET_NAME=""
+
+# SMTP (최고관리자 초대 메일 발송)
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=""
+SMTP_PASS=""
+FRONTEND_SIGNUP_URL=https://your-frontend.com/signup
+```
+
+### 3. 데이터베이스 설정
+
+```bash
+# Prisma 클라이언트 생성
+yarn prisma:generate
+
+# 데이터베이스 마이그레이션
+yarn prisma:migrate
+
+# 시드 데이터 (선택)
+yarn prisma:seed
+yarn prisma:seed-items
+```
+
+### 4. 서버 실행
+
+```bash
+# 개발 모드
+yarn dev
+
+# 프로덕션 빌드
+yarn build
+yarn start
+```
+
+---
+
+## API 엔드포인트
+
+### 인증 (Authentication)
+
+- **POST** `/api/auth/signup` - 회원가입
+- **POST** `/api/auth/login` - 로그인
+- **GET** `/api/auth/me` - 현재 유저 정보
+- **POST** `/api/auth/logout` - 로그아웃
+- **POST** `/api/auth/refresh` - 토큰 갱신
+- **PATCH** `/api/auth/password` - 비밀번호 변경
+
+### 상품 (Items)
+
+- **GET** `/api/items` - 상품 목록 (category_main, category_sub, sort, page, limit, mine=1)
+- **GET** `/api/items/:id` - 상품 상세
+- **POST** `/api/items` - 상품 등록
+- **PATCH** `/api/items/:id` - 상품 수정
+- **DELETE** `/api/items/:id` - 상품 삭제
+
+### 장바구니 (Cart)
+
+- **GET** `/api/cart` - 장바구니 목록
+- **POST** `/api/cart/items` - 상품 추가
+- **PATCH** `/api/cart/items/:id` - 수량 수정
+- **DELETE** `/api/cart/items/:id` - 품목 삭제
+- **DELETE** `/api/cart` - 장바구니 비우기
+
+### 주문 (Orders)
+
+- **GET** `/api/orders` - 구매 요청 목록
+- **GET** `/api/orders/history` - 구매 확정 이력
+- **GET** `/api/orders/:id` - 주문 상세
+- **POST** `/api/orders` - 주문 생성
+- **DELETE** `/api/orders/:id` - 주문 취소
+
+### 유저 (Users)
+
+- **GET** `/api/users/profile` - 프로필 조회
+- **PATCH** `/api/users/profile/password` - 비밀번호 변경
+
+### 관리자 (Admin)
+
+- **GET** `/api/admin/orders` - 주문 목록 (status: pending | approved | all)
+- **GET** `/api/admin/orders/:id` - 주문 상세
+- **PATCH** `/api/admin/orders/:id` - 승인/반려
+
+### 최고관리자 (Super Admin)
+
+- **POST** `/api/super-admin/invitations` - 초대 메일 발송
+- **GET** `/api/super-admin/users` - 전체 유저 목록
+- **PATCH** `/api/super-admin/users/:id` - 유저 등급 수정
+- **DELETE** `/api/super-admin/users/:id` - 유저 삭제
+- **GET** `/api/super-admin/budget/current` - 이번 달 예산 조회
+- **PATCH** `/api/super-admin/budget/current` - 예산 수정
+
+---
+
+## 기술 스택
+
+- Node.js, Express.js, TypeScript
+- Prisma, PostgreSQL
+- JWT (쿠키 기반), bcryptjs
+- Multer + AWS S3
+- node-cron (월별 예산 초기화)
+
+---
+
+## 구매 횟수 (count) 기능
+
+- `items.count`: 상품별 누적 구매 수량
+- **증가 시점**: 주문 승인 시 (관리자 승인 또는 즉시 구매)
+- 상품 목록/상세 API 응답에 `count` 포함
+
+---
+
+## 추가 문서
+
+- [API 상세 문서](API.md)
+- [프론트엔드 인증 가이드](FE_AUTH_GUIDE.md)
+- [프론트엔드 예산 가이드](FE_BUDGET_GUIDE.md)
+- [배포 가이드](DEPLOY.md)

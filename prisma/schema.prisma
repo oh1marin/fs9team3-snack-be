@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  password       String
+  is_admin       String   @default("N")
+  is_super_admin String   @default("N")
+  create_at      DateTime @default(now())
+  updated_at     DateTime @updatedAt
+  items          Item[]
+  carts          Cart[]
+  orders         Order[]
+  invitations    Invitation[]
+
+  @@map("users")
+}
+
+model Invitation {
+  id         String    @id @default(uuid())
+  email      String
+  token      String    @unique
+  expires_at DateTime
+  used_at    DateTime?
+  created_by String
+  created_at DateTime  @default(now())
+  creator    User      @relation(fields: [created_by], references: [id], onDelete: Cascade)
+
+  @@map("invitations")
+}
+
+model Item {
+  id            String   @id @default(uuid())
+  price         Int
+  image         String
+  category_main String
+  category_sub  String
+  count         Int      @default(0)
+  user_id       String
+  title         String
+  link          String?
+  create_at     DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  carts         Cart[]
+  order_items   OrderItem[]
+
+  @@map("items")
+}
+
+model Cart {
+  id          String   @id @default(uuid())
+  item_id     String
+  user_id     String
+  quantity    Int      @default(1)
+  total_price Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  item Item @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, item_id])
+  @@map("carts")
+}
+
+enum OrderStatus {
+  pending
+  approved
+  canceled
+}
+
+model Order {
+  id                   String      @id @default(uuid())
+  user_id              String
+  status               OrderStatus @default(pending)
+  request_date         DateTime    @default(now())
+  total_amount         Int         @default(0)
+  created_at           DateTime    @default(now())
+  updated_at           DateTime    @updatedAt
+  approved_at          DateTime?
+  canceled_at          DateTime?
+  is_instant_purchase  Boolean     @default(false)
+  user                 User        @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  order_items          OrderItem[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String   @id @default(uuid())
+  order_id    String
+  item_id     String
+  quantity    Int      @default(1)
+  total_price Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  order Order @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  item  Item  @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@map("order_items")
+}
+
+// 시작 예산 (매달 기본값. 새 월 생성 시 이 값으로 budget_amount 세팅)
+model InitialBudget {
+  id         String   @id @default(uuid())
+  amount     Int      @default(0) // 매달 기본 시작 예산 (원)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("initial_budgets")
+}
+
+// 월별 예산 (매달 1일 cron으로 해당 월 레코드 생성. budget_amount = 당월 설정 또는 initial_budget)
+model MonthlyBudget {
+  id            String   @id @default(uuid())
+  year          Int
+  month         Int      // 1~12
+  budget_amount Int      @default(0) // 이번 달 예산 (월 예산. 새 월은 initial_budget으로 시작)
+  spent_amount  Int      @default(0) // 이번 달 사용액
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  @@unique([year, month])
+  @@map("monthly_budgets")
+}
+
