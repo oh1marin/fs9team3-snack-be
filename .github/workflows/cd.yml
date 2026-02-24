@@ -23,9 +23,10 @@ jobs:
           port: ${{ secrets.SSH_PORT || 22 }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
-            git pull origin main
+            git fetch origin main
+            git reset --hard origin/main
             npm ci
             npx prisma generate
-            npx prisma migrate deploy
+            npx prisma db push
             npm run build
             pm2 restart snack-be || pm2 start dist/app.js --name snack-be
