@@ -38,12 +38,20 @@ jobs:
       - name: 빌드파일 압축하기
         run: tar -czvf project.tar.gz dist .env package.json package-lock.json prisma
 
+      - name: SSH 키 파일 생성
+        env:
+          SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          echo "$SSH_KEY" > deploy_key.pem
+          chmod 600 deploy_key.pem
+          if [ ! -s deploy_key.pem ]; then echo "::error::SSH_PRIVATE_KEY가 비어있습니다. GitHub Secrets 확인하세요."; exit 1; fi
+
       - name: scp 사용하여 EC2에 빌드파일 전송하기
         uses: appleboy/scp-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: ${{ github.workspace }}/deploy_key.pem
           source: project.tar.gz
           target: ${{ secrets.DEPLOY_PATH }}
 
@@ -52,7 +60,7 @@ jobs:
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: ${{ github.workspace }}/deploy_key.pem
           script_stop: true
           script: |
             cd ${{ secrets.DEPLOY_PATH }}
