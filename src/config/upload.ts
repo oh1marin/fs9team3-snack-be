@@ -1,7 +1,11 @@
 import type { Request } from "express";
 import multer from "multer";
 import multerS3 from "multer-s3";
-import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 /**
@@ -21,7 +25,7 @@ export const s3Client = new S3Client({
 /**
  * 상품 이미지 업로드 미들웨어
  * - AWS_PUBLIC_BUCKET_NAME 설정 시: S3 퍼블릭 버킷에 업로드
- * - 미설정 시: memoryStorage (이미지 URL은 req.body.image로 전달)
+ * - 미설정 시: memoryStorage (이미지 URL은 req.body.image로 전달)1
  */
 // multer-s3와 @aws-sdk/client-s3 버전 불일치로 타입 단언 사용
 const s3Storage = process.env.AWS_PUBLIC_BUCKET_NAME
@@ -32,7 +36,7 @@ const s3Storage = process.env.AWS_PUBLIC_BUCKET_NAME
       key: (
         _req: Request,
         file: Express.Multer.File,
-        cb: (error: Error | null, key: string) => void
+        cb: (error: Error | null, key: string) => void,
       ) => {
         cb(null, `${Date.now()}_${file.originalname}`);
       },
@@ -59,12 +63,12 @@ export function getPublicObjectUrl(bucket: string, key: string): string {
 export async function getPresignedUploadUrl(
   bucket: string,
   key: string,
-  expiresIn = 900
+  expiresIn = 900,
 ): Promise<string> {
   const url = await getSignedUrl(
     s3Client as never,
     new PutObjectCommand({ Bucket: bucket, Key: key }),
-    { expiresIn }
+    { expiresIn },
   );
   return url;
 }
@@ -78,12 +82,12 @@ export async function getPresignedUploadUrl(
 export async function getPresignedDownloadUrl(
   bucket: string,
   key: string,
-  expiresIn = 3600
+  expiresIn = 3600,
 ): Promise<string> {
   const url = await getSignedUrl(
     s3Client as never,
     new GetObjectCommand({ Bucket: bucket, Key: key }),
-    { expiresIn }
+    { expiresIn },
   );
   return url;
 }
@@ -93,7 +97,7 @@ export async function getPresignedDownloadUrl(
  * 클라이언트: 1) PUT으로 uploadUrl에 파일 업로드 → 2) imageUrl을 상품 등록/수정 API의 image 필드로 전달
  */
 export async function createPresignedUpload(
-  filename?: string
+  filename?: string,
 ): Promise<{ uploadUrl: string; key: string; imageUrl: string }> {
   const bucket = process.env.AWS_PUBLIC_BUCKET_NAME;
   if (!bucket) {
