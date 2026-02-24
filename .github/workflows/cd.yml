@@ -29,4 +29,5 @@ jobs:
             npx prisma generate
             npx prisma db push
             npm run build
-            pm2 restart snack-be || pm2 start dist/app.js --name snack-be
+            pm2 delete snack-be 2>/dev/null || true
+            pm2 start dist/app.js --name snack-be
