@@ -34,8 +34,12 @@ FE: Base URL은 \`NEXT_PUBLIC_API_URL\`, 모든 요청에 \`credentials: 'includ
     },
     tags: [
       { name: "Auth", description: "인증 (회원가입, 로그인, 로그아웃, 토큰 갱신, 비밀번호 변경)" },
-      { name: "Items", description: "상품 CRUD (목록·상세·등록·수정·삭제)" },
+      { name: "Items", description: "상품 CRUD (목록·상세·등록·수정·삭제, count=구매 횟수)" },
+      { name: "Cart", description: "장바구니 (조회·추가·수정·삭제·비우기)" },
+      { name: "Orders", description: "주문 (구매 요청·상세·이력·생성·취소)" },
+      { name: "Admin", description: "관리자 (구매 요청 승인/반려)" },
       { name: "Users", description: "사용자 프로필·비밀번호 변경" },
+      { name: "Super Admin", description: "최고관리자 (초대·유저·예산 관리)" },
     ],
   },
   apis: ["./src/swagger-docs.ts"],
