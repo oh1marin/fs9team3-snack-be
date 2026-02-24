@@ -1,7 +1,11 @@
 import { Response } from "express";
 import { PrismaClient, OrderStatus } from "@prisma/client";
 import { AuthRequest } from "../middleware/authMiddleware";
-import { addSpentToBudget, canAffordOrder, getShippingFee } from "../cron/budgetCron";
+import {
+  addSpentToBudget,
+  canAffordOrder,
+  getShippingFee,
+} from "../cron/budgetCron";
 
 const prisma = new PrismaClient();
 
@@ -274,13 +278,15 @@ export const getOrderById = async (req: AuthRequest, res: Response) => {
     }
 
     const idParam = req.params.id;
+    console.log("idParam", idParam);
     const id = (Array.isArray(idParam) ? idParam[0] : idParam)?.trim();
     if (!id) {
       return res.status(400).json({ message: "주문 ID가 필요합니다." });
     }
 
+    console.log("userId--------", userId);
     const orderRaw = await prisma.order.findFirst({
-      where: { id, user_id: userId },
+      where: { id },
       include: { order_items: { include: { item: true } } },
     });
     if (!orderRaw) {
@@ -463,7 +469,9 @@ export const patchOrderStatusAdmin = async (
 
     // 승인 시 남은 예산 체크
     if (status === "approved") {
-      const { ok, remaining, required } = await canAffordOrder(order.total_amount);
+      const { ok, remaining, required } = await canAffordOrder(
+        order.total_amount,
+      );
       if (!ok) {
         return res.status(400).json({
           message: "예산이 부족하여 승인할 수 없습니다.",
