@@ -7,7 +7,10 @@ msg.txt
 # Keep environment variables out of version control
 .env
 .env.ec2
+.env.github
 .env.example
+.github/SECRETS_복붙용.txt
+scripts/server-setup.sh
 docs/
 
 /src/generated/prisma

@@ -20,7 +20,7 @@ export const authMiddleware = (
   try {
     // 헤더에서 토큰 확인 (Authorization: Bearer <token>)
     let token = req.headers.authorization?.split(" ")[1];
-    
+
     // 헤더에 없으면 쿠키에서 확인
     if (!token) {
       token = req.cookies?.accessToken;
@@ -34,13 +34,13 @@ export const authMiddleware = (
       userId: string;
       email: string;
     };
-    
+
     // req.user 객체 설정 (컨트롤러에서 사용)
     req.user = {
       id: decoded.userId,
       email: decoded.email,
     };
-    
+
     next();
   } catch (error) {
     return res.status(401).json({ message: "유효하지 않은 토큰입니다." });
@@ -56,7 +56,7 @@ export const optionalAuthMiddleware = (
   try {
     // 헤더에서 토큰 확인 (Authorization: Bearer <token>)
     let token = req.headers.authorization?.split(" ")[1];
-    
+
     // 헤더에 없으면 쿠키에서 확인
     if (!token) {
       token = req.cookies?.accessToken;
@@ -72,7 +72,7 @@ export const optionalAuthMiddleware = (
         email: decoded.email,
       };
     }
-    
+
     next();
   } catch (error) {
     // 토큰이 유효하지 않아도 통과
