@@ -24,7 +24,6 @@ jobs:
       - name: Run tests
         run: npm test
         env:
-          # Prisma generate용 (실제 DB 연결 없음)
           DATABASE_URL: "postgresql://user:pass@localhost:5432/ci_test"
 
       - name: Build

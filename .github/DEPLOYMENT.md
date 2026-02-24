@@ -5,19 +5,19 @@
 - **실행**: `npm ci` → `npm test` → `npm run build`
 
 ## CD (배포)
-- **트리거**: CI 통과 후 `main` 브랜치에 push 시
-- **수동 실행**: Actions 탭 → CD (Deploy) → Run workflow
+- **트리거**: `main` 브랜치 push 시
+- **deploy.yml**: 테스트 → 빌드 → tar → scp → SSH로 서버 배포
 
 ## 필요한 GitHub Secrets
 레포지토리 **Settings → Secrets and variables → Actions** 에 추가:
 
 | Secret | 설명 |
 |--------|------|
-| `SSH_HOST` | 배포 서버 IP 또는 도메인 |
-| `SSH_USER` | SSH 로그인 사용자 |
-| `SSH_PRIVATE_KEY` | SSH 비밀키 전체 내용 |
-| `SSH_PORT` | (선택) SSH 포트, 기본 22 |
-| `DEPLOY_PATH` | 서버 내 앱 디렉토리 경로 (예: `/home/ubuntu/fs9team3-snack-be`) |
+| `EC2_HOST` | 배포 서버 IP (예: `13.209.35.172`) |
+| `EC2_USERNAME` | SSH 로그인 사용자 (예: `ec2-user`) |
+| `EC2_PRIVATE_KEY` | SSH 비밀키(PEM) 전체 내용 |
+| `DEPLOY_PATH` | 서버 내 앱 디렉토리 (예: `/home/ec2-user/fs9team3-snack-be`) |
+| `ENV` | .env 파일 전체 내용 (.env.ec2 내용 복사) |
 
 ## 서버 사전 준비
 한 번만 실행하면 됩니다:
