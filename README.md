@@ -1,5 +1,7 @@
 # 🍿 Snack - 기업용 간식 마켓플레이스
 
+<img src="https://github.com/user-attachments/assets/84a96a34-57de-4b1a-9d52-1f5422b45f9e" width="100%" />
+
 기업 담당자가 사내 간식 및 음료를 관리하고 주문할 수 있는 마켓플레이스 플랫폼
 
 > 📅 개발 기간: 2026.01.14 ~ 2026.02.25
@@ -8,28 +10,28 @@
 
 ## 🔗 링크
 
-| 서비스         | URL                                                              |
-| -------------- | ---------------------------------------------------------------- |
-| 🌐 배포 사이트 | [https://marin-snack.store/](https://marin-snack.store/)         |
-| 📄 API 문서    | [http://13.209.35.172/api-docs/](http://13.209.35.172/api-docs/) |
+| 서비스         | URL                                                                                    |
+| -------------- | -------------------------------------------------------------------------------------- |
+| 🌐 배포 사이트 | [https://marin-snack.store/](https://marin-snack.store/)                               |
+| 📄 API 문서    | [http://13.209.35.172/api-docs/](http://13.209.35.172/api-docs/)                       |
+| 🖥️ FE 저장소   | [github.com/oh1marin/fs9team3-snack-fe](https://github.com/oh1marin/fs9team3-snack-fe) |
+| ⚙️ BE 저장소   | [github.com/oh1marin/fs9team3-snack-be](https://github.com/oh1marin/fs9team3-snack-be) |
 
 <br />
 
 ## 📸 화면 미리보기
 
-> 스크린샷을 여기에 추가하세요
-
-|                                                    홈                                                    |                                                상품 목록                                                 |                                                상품 상세                                                 |
+|                                                    홈                                                    |                                                  로그인                                                  |                                                상품 목록                                                 |
 | :------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
-| <img src="https://github.com/user-attachments/assets/45a3b942-4a63-488a-b768-3d16a393fb98" width="280"/> | <img src="https://github.com/user-attachments/assets/798129fe-f43d-4d11-8aed-f8726030710f" width="280"/> | <img src="https://github.com/user-attachments/assets/19bf3a41-6211-47ae-bde0-89c2714dd5d6" width="280"/> |
+| <img src="https://github.com/user-attachments/assets/45a3b942-4a63-488a-b768-3d16a393fb98" width="280"/> | <img src="https://github.com/user-attachments/assets/3cca9a51-995f-4efe-85e1-a5d8ffdfc281" width="280"/> | <img src="https://github.com/user-attachments/assets/798129fe-f43d-4d11-8aed-f8726030710f" width="280"/> |
 
-|                                                 장바구니                                                 |                                                주문 내역                                                 |                                                  관리자                                                  |
+|                                                상품 상세                                                 |                                              상품 등록 모달                                              |                                                 장바구니                                                 |
 | :------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
-| <img src="https://github.com/user-attachments/assets/3749dd80-ffa5-44d9-a8a4-697b51b48d28" width="280"/> | <img src="https://github.com/user-attachments/assets/5f5e1cc1-56a2-463a-931d-60dc83017435" width="280"/> | <img src="https://github.com/user-attachments/assets/a1be1fb5-171a-4bea-b785-9b5d855e34e2" width="280"/> |
+| <img src="https://github.com/user-attachments/assets/19bf3a41-6211-47ae-bde0-89c2714dd5d6" width="280"/> | <img src="https://github.com/user-attachments/assets/bdd5afdf-895e-4552-9e42-81124ec822ed" width="280"/> | <img src="https://github.com/user-attachments/assets/3749dd80-ffa5-44d9-a8a4-697b51b48d28" width="280"/> |
 
-|                                                  로그인                                                  |                                              상품 등록 모달                                              |                                             관리자 승인/반려                                             |
+|                                                주문 내역                                                 |                                                  관리자                                                  |                                             관리자 승인/반려                                             |
 | :------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: | :------------------------------------------------------------------------------------------------------: |
-| <img src="https://github.com/user-attachments/assets/3cca9a51-995f-4efe-85e1-a5d8ffdfc281" width="280"/> | <img src="https://github.com/user-attachments/assets/bdd5afdf-895e-4552-9e42-81124ec822ed" width="280"/> | <img src="https://github.com/user-attachments/assets/89e3677b-9a56-4eaa-8fd4-85175a91b06b" width="280"/> |
+| <img src="https://github.com/user-attachments/assets/5f5e1cc1-56a2-463a-931d-60dc83017435" width="280"/> | <img src="https://github.com/user-attachments/assets/a1be1fb5-171a-4bea-b785-9b5d855e34e2" width="280"/> | <img src="https://github.com/user-attachments/assets/89e3677b-9a56-4eaa-8fd4-85175a91b06b" width="280"/> |
 
 <br />
 
@@ -68,9 +70,13 @@
 
 ## 🗄 DB 스키마
 
-> DB 스키마 이미지를 여기에 추가하세요
-
 <img src="https://github.com/user-attachments/assets/983e3950-15aa-4aac-b54b-86ae8c51a88f" width="800" />
+
+<br />
+
+## 🔌 API 문서
+
+[http://13.209.35.172/api-docs/](http://13.209.35.172/api-docs/)
 
 <br />
 
@@ -164,13 +170,10 @@
 
 <br />
 
-## 🔌 API 문서
-
-[http://13.209.35.172/api-docs/](http://13.209.35.172/api-docs/)
+<details>
+<summary>🐛 트러블슈팅</summary>
 
 <br />
-
-## 트러블슈팅
 
 ### 1. 헤더 로그인 상태 불안정 문제
 
@@ -203,3 +206,5 @@ const { default: AddToCartModal } = await import("@/components/AddToCartModal");
 ```
 
 초기 번들 크기가 줄었고, 모달처럼 조건부로만 필요한 컴포넌트는 dynamic import가 적합하다는 것을 확인했다.
+
+</details>
