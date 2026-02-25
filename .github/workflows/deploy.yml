@@ -27,8 +27,6 @@ jobs:
 
       - name: 테스트 코드 실행
         run: npm test
-        env:
-          DATABASE_URL: "postgresql://user:pass@localhost:5432/ci_test"
 
       - name: 빌드
         run: npm run build
