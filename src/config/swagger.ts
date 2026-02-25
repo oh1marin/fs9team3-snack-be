@@ -10,7 +10,8 @@ const options: swaggerJsdoc.Options = {
 FE: Base URL은 \`NEXT_PUBLIC_API_URL\`, 모든 요청에 \`credentials: 'include'\` 필요.`,
     },
     servers: [
-      { url: "http://localhost:3001", description: "개발 서버 (FE Base URL: NEXT_PUBLIC_API_URL)" },
+      { url: "http://13.209.35.172:3001", description: "배포 서버 (EC2)" },
+      { url: "http://localhost:3001", description: "개발 서버" },
     ],
     components: {
       securitySchemes: {

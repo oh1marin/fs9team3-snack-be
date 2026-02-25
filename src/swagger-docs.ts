@@ -137,8 +137,7 @@
  *   get:
  *     tags: [Items]
  *     summary: 상품 목록 조회 (페이지네이션)
- *     description: 카테고리·정렬·페이지로 상품 목록 조회. FE 상품 목록 페이지에서 사용.
- *     security: [{ cookieAuth: [] }]
+ *     description: 카테고리·정렬·페이지로 상품 목록 조회. 인증 없이도 가능. mine=1일 때만 로그인 필요.
  *     parameters:
  *       - in: query
  *         name: category_main
@@ -168,23 +167,34 @@
  *       200:
  *         description: data, pagination. data[].count=구매 횟수(주문 승인 시 증가)
  *       401:
- *         description: 인증되지 않음
+ *         description: mine=1인데 로그인 안 됨
  *   post:
  *     tags: [Items]
  *     summary: 상품 등록
- *     description: 로그인된 사용자가 새 상품 등록. 이미지는 base64 또는 URL.
+ *     description: 로그인된 사용자가 새 상품 등록. multipart/form-data(파일 업로드) 또는 application/json(이미지 URL) 모두 가능.
  *     security: [{ cookieAuth: [] }]
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
- *             required: [title, price, image, category_main, category_sub]
+ *             required: [title, price, category_main, category_sub]
  *             properties:
  *               title: { type: string, example: "오리온 포카칩" }
  *               price: { type: integer, example: 1500 }
- *               image: { type: string, description: "이미지 base64 또는 URL" }
+ *               image: { type: string, format: binary, description: "이미지 파일 (S3 업로드)" }
+ *               category_main: { type: string, example: "과자" }
+ *               category_sub: { type: string, example: "스낵" }
+ *               link: { type: string, description: "상품 링크 (선택)" }
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [title, price, category_main, category_sub]
+ *             properties:
+ *               title: { type: string, example: "오리온 포카칩" }
+ *               price: { type: integer, example: 1500 }
+ *               image: { type: string, description: "이미지 URL (presigned 업로드 후 URL 전달)" }
  *               category_main: { type: string, example: "과자" }
  *               category_sub: { type: string, example: "스낵" }
  *               link: { type: string, nullable: true, description: "상품 링크 (선택)" }
@@ -199,12 +209,54 @@
 
 /**
  * @swagger
+ * /api/items/presigned-upload-url:
+ *   get:
+ *     tags: [Items]
+ *     summary: S3 Presigned 업로드 URL 발급
+ *     description: 클라이언트가 이 URL로 직접 S3에 PUT 업로드 후, 반환된 imageUrl을 상품 등록/수정 시 image 필드로 전달.
+ *     security: [{ cookieAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: filename
+ *         schema: { type: string, example: "snack.jpg" }
+ *         description: 업로드할 파일명 (선택)
+ *     responses:
+ *       200:
+ *         description: "{ uploadUrl: string, imageUrl: string, key: string }"
+ *       401:
+ *         description: 인증되지 않음
+ */
+
+/**
+ * @swagger
+ * /api/items/presigned-image:
+ *   get:
+ *     tags: [Items]
+ *     summary: S3 프라이빗 이미지 Presigned 다운로드 URL 발급
+ *     description: 프라이빗 S3 버킷 객체를 일시적으로 조회할 수 있는 URL 발급.
+ *     security: [{ cookieAuth: [] }]
+ *     parameters:
+ *       - in: query
+ *         name: key
+ *         required: true
+ *         schema: { type: string, example: "uploads/abc123.jpg" }
+ *         description: S3 객체 키
+ *     responses:
+ *       200:
+ *         description: "{ url: string }"
+ *       400:
+ *         description: key 누락 또는 AWS_PRIVATE_BUCKET_NAME 미설정
+ *       401:
+ *         description: 인증되지 않음
+ */
+
+/**
+ * @swagger
  * /api/items/{id}:
  *   get:
  *     tags: [Items]
  *     summary: 상품 상세 조회
- *     description: 상품 ID로 상세 정보 조회 (판매자 정보 포함). FE 상품 상세/모달에서 사용.
- *     security: [{ cookieAuth: [] }]
+ *     description: 상품 ID로 상세 정보 조회 (판매자 정보, isOwner 포함). 인증 없이도 가능. 로그인 시 isOwner 정확히 반환.
  *     parameters:
  *       - in: path
  *         name: id
@@ -213,17 +265,15 @@
  *         description: 상품 ID
  *     responses:
  *       200:
- *         description: 상품 상세 (판매자 정보 포함)
+ *         description: "{ id, title, price, image, category_main, category_sub, count, seller, isOwner, ... }"
  *       400:
  *         description: 유효하지 않은 id
  *       404:
  *         description: 상품 없음
- *       401:
- *         description: 인증되지 않음
  *   patch:
  *     tags: [Items]
  *     summary: 상품 수정 (PATCH)
- *     description: 본인 상품만 수정 가능. 일부 필드만 보내도 됨.
+ *     description: 본인 상품만 수정 가능. 일부 필드만 보내도 됨. multipart/form-data(파일) 또는 application/json(URL) 모두 가능.
  *     security: [{ cookieAuth: [] }]
  *     parameters:
  *       - in: path
@@ -232,13 +282,23 @@
  *         schema: { type: string }
  *     requestBody:
  *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               price: { type: integer }
+ *               image: { type: string, format: binary }
+ *               category_main: { type: string }
+ *               category_sub: { type: string }
+ *               link: { type: string, nullable: true }
  *         application/json:
  *           schema:
  *             type: object
  *             properties:
  *               title: { type: string }
  *               price: { type: integer }
- *               image: { type: string }
+ *               image: { type: string, description: "이미지 URL" }
  *               category_main: { type: string }
  *               category_sub: { type: string }
  *               link: { type: string, nullable: true }
@@ -264,6 +324,16 @@
  *         schema: { type: string }
  *     requestBody:
  *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               title: { type: string }
+ *               price: { type: integer }
+ *               image: { type: string, format: binary }
+ *               category_main: { type: string }
+ *               category_sub: { type: string }
+ *               link: { type: string, nullable: true }
  *         application/json:
  *           schema:
  *             type: object
