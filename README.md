@@ -2,9 +2,11 @@
 
 <img src="https://github.com/user-attachments/assets/84a96a34-57de-4b1a-9d52-1f5422b45f9e" width="100%" />
 
-기업 담당자가 사내 간식 및 음료를 관리하고 주문할 수 있는 마켓플레이스 플랫폼
+**Snack**은 기업 담당자가 사내 간식 및 음료를 관리하고 주문할 수 있는 마켓플레이스 플랫폼입니다!
 
-> 📅 개발 기간: 2026.01.14 ~ 2026.02.25
+최고관리자는 이메일 초대로 직원들을 플랫폼에 가입시키고, 유저 권한을 일반·관리자로 변경하거나 유저의 계정을 삭제할 수 있습니다. 월별 예산을 설정해 회사의 간식 지출을 관리하며, 예산은 매월 자동으로 초기화됩니다.
+
+직원들은 원하는 상품을 직접 등록할 수 있으며, 장바구니에 담아 구매를 요청합니다. 관리자는 이를 승인하거나 반려합니다. 관리자는 즉시 구매가 가능하며, 장바구니에서 잔여 예산을 실시간으로 확인할 수 있습니다. 승인된 주문은 구매 내역에 기록되어 관리자가 전체 내역을 조회할 수 있습니다.
 
 <br />
 
@@ -37,7 +39,7 @@
 
 ## 🏗 시스템 아키텍처
 
-<img src="https://github.com/user-attachments/assets/f794d086-c988-497a-b292-f6b36a560b98" width="800" />
+<img src="https://github.com/user-attachments/assets/fe5a6118-cd00-48ae-b767-b5b70b301a54" width="800" />
 
 <br />
 
@@ -55,16 +57,22 @@
 ![Node.js](https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white)
 ![Express.js](https://img.shields.io/badge/express.js-%23404d59.svg?style=for-the-badge&logo=express&logoColor=%2361DAFB)
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
-![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=JSON%20web%20tokens)
+![Nodemailer](https://img.shields.io/badge/Nodemailer-22B573?style=for-the-badge&logo=gmail&logoColor=white)
+![node-cron](https://img.shields.io/badge/node--cron-FF6B6B?style=for-the-badge&logo=clockify&logoColor=white)
+
+#### Database & Storage
+
+![PostgreSQL](https://img.shields.io/badge/postgresql-%23316192.svg?style=for-the-badge&logo=postgresql&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white)
 ![AWS S3](https://img.shields.io/badge/AWS%20S3-FF9900?style=for-the-badge&logo=amazons3&logoColor=white)
 
-#### Infra & Tools
+#### Deploy & Infra
 
 ![Vercel](https://img.shields.io/badge/vercel-%23000000.svg?style=for-the-badge&logo=vercel&logoColor=white)
-![Git](https://img.shields.io/badge/git-%23F05033.svg?style=for-the-badge&logo=git&logoColor=white)
-![GitHub](https://img.shields.io/badge/github-%23121212.svg?style=for-the-badge&logo=github&logoColor=white)
+![AWS EC2](https://img.shields.io/badge/AWS%20EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
+![AWS RDS](https://img.shields.io/badge/AWS%20RDS-527FFF?style=for-the-badge&logo=amazonrds&logoColor=white)
+![Cloudflare](https://img.shields.io/badge/Cloudflare-F38020?style=for-the-badge&logo=Cloudflare&logoColor=white)
 
 <br />
 
