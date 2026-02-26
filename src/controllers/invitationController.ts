@@ -15,7 +15,7 @@ const INVITATION_EXPIRES_DAYS = 7;
 export const sendInvitation = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   try {
     const { email } = req.body;

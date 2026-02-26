@@ -51,12 +51,17 @@ function cookieOptions(maxAgeMs: number) {
 // 회원가입 (선택: invitationToken/token 있으면 초대 링크로 가입, 이메일은 초대 이메일과 일치해야 함)
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, invitationToken, token } = req.body;
+    const { email, password, name, invitationToken, token } = req.body;
     const invToken = invitationToken ?? token; // FE가 쿼리 param token을 body에 token으로 보낼 수 있음
 
     // 필수 필드 검사
     if (!email || !password) {
       throw new BadRequestError("이메일과 비밀번호를 입력해주세요.");
+    }
+
+    // 초대 가입 시 name 필수
+    if (invToken && !name?.trim()) {
+      throw new BadRequestError("이름을 입력해주세요.");
     }
 
     const emailTrimmed = String(email).trim();
@@ -150,6 +155,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
       user: {
         id: user.id,
         email: user.email,
+        name: name?.trim() || null,
         nickname: user.email.split("@")[0],
         is_admin: (user as { is_admin?: string }).is_admin ?? "N",
         is_super_admin: (user as { is_super_admin?: string }).is_super_admin ?? "N",
